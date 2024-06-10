@@ -1,0 +1,223 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="common/css/sf.css" rel="stylesheet" type="text/css" />
+<title>ITreesEquiv</title>
+<link href="common/jquery-ui/jquery-ui.css" rel="stylesheet">
+<script src="common/jquery-ui/external/jquery/jquery.js"></script>
+<script src="common/jquery-ui/jquery-ui.js"></script>
+<script src="common/toggleproofs.js"></script>
+<link href="common/css/rip.css" rel="stylesheet" type="text/css"/>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+<div id='logoinheader'><a href='https://softwarefoundations.cis.upenn.edu'>
+<img src='common/media/image/sf_logo_sm.png' alt='Software Foundations Logo'></a></div>
+<div class='booktitleinheader'><a href='index.html'>Volume 7: Reasoning about Interactive Programs</a></div>
+<ul id='menu'>
+   <li class='section_name'><a href='toc.html'>Table of Contents</a></li>
+   <li class='section_name'><a href='coqindex.html'>Index</a></li>
+</ul>
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">ITreesEquiv</h1>
+
+
+<div class="doc">
+<a id="lab198"></a><h2 class="section"><span class="inlinecode"><span class="id" title="var">itree</span></span> <span class="inlinecode"><span class="id" title="var">E</span></span> as a Monad</h2>
+
+<div class="paragraph"> </div>
+
+ We saw that <span class="inlinecode"><span class="id" title="var">itree</span></span> <span class="inlinecode"><span class="id" title="var">E</span></span> supports the monad operations, but to be a valid
+instance we  must also define <span class="inlinecode"><span class="id" title="var">eqM</span></span> and prove the <span class="inlinecode"><span class="id" title="var">MonadLaws</span></span>. 
+<div class="paragraph"> </div>
+
+ What is the right notion of "equivalence" for itrees <span class="inlinecode"><span class="id" title="var">t<sub>1</sub></span></span> and <span class="inlinecode"><span class="id" title="var">t<sub>2</sub></span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">itree</span></span> <span class="inlinecode"><span class="id" title="var">E</span></span> <span class="inlinecode"><span class="id" title="var">R</span></span>? 
+<div class="paragraph"> </div>
+
+<br/>
+<span class="inlinecode">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">t<sub>1</sub></span> ≈ <span class="id" title="var">t<sub>2</sub></span> : <span class="id" title="var">itree</span> <span class="id" title="var">E</span> <span class="id" title="var">R</span>
+</span>
+<div class="paragraph"> </div>
+
+<a id="lab199"></a><h3 class="section">Strong Bisimulations</h3>
+
+<div class="paragraph"> </div>
+
+ Because <span class="inlinecode"><span class="id" title="var">itree</span></span> is a <i>coinductive</i> data structure, it can represent
+"infinite" trees. The intuitive notion of equivalence is also <i>coinductive</i>.
+<div class="paragraph"> </div>
+
+ <i>Strong Bisimulation</i>: 
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> intuitively, <i>unroll</i> the two trees and compare them structurally for equality.
+
+</li>
+<li> we write this as <span class="inlinecode"><span class="id" title="var">t<sub>1</sub></span></span> <span class="inlinecode">∼</span> <span class="inlinecode"><span class="id" title="var">t<sub>2</sub></span></span>
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+We can prove the monad laws up to strong bisimulation.
+
+<div class="paragraph"> </div>
+
+<a id="lab200"></a><h3 class="section">Weak Bisimulation</h3>
+
+<div class="paragraph"> </div>
+
+ We want to treat <span class="inlinecode"><span class="id" title="var">Tau</span></span> as an "internal" step of computation, which means
+that we should (mostly) ignore them for the purposes of determining whether 
+two trees are equivalent. 
+<div class="paragraph"> </div>
+
+ <i>Weak Bisimulation</i>: 
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> intuitively, <i>unroll</i> the two trees 
+
+</li>
+<li> "ignore" <span class="inlinecode"><span class="id" title="var">Tau</span></span> nodes on each side, then check for equality
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+
+<div class="paragraph"> </div>
+
+We write this as <span class="inlinecode"><span class="id" title="var">t<sub>1</sub></span></span> <span class="inlinecode">≈</span> <span class="inlinecode"><span class="id" title="var">t<sub>2</sub></span></span>.
+
+<div class="paragraph"> </div>
+
+This justifies the following equivalence:
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> <span class="inlinecode"><span class="id" title="var">Tau</span></span> <span class="inlinecode"><span class="id" title="var">t</span></span> <span class="inlinecode">≈</span> <span class="inlinecode"><span class="id" title="var">t</span></span>
+
+</li>
+<li> "equivalent up to Tau" (or, <span class="inlinecode"><span class="id" title="var">eutt</span></span>)
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+
+<div class="paragraph"> </div>
+
+<a id="lab201"></a><h3 class="section">Laws for Iteration</h3>
+
+<div class="paragraph"> </div>
+
+ Using weak bisimulation, we can define laws that show that iteration behaves
+well with sequential composition. 
+</div>
+<div class="code">
+<hr class='doublespaceincode'/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="iter_unroll_law" class="idref" href="#iter_unroll_law"><span class="id" title="definition">iter_unroll_law</span></a> : <span class="id" title="keyword">∀</span> <a id="i:5" class="idref" href="#i:5"><span class="id" title="binder">i</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">iter</span> <a class="idref" href="ITreesEquiv.html#IterLaws.step"><span class="id" title="variable">step</span></a> <a class="idref" href="ITreesEquiv.html#i:5"><span class="id" title="variable">i</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">≈</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="x:6" class="idref" href="#x:6"><span class="id" title="binder">x</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="ITreesEquiv.html#IterLaws.step"><span class="id" title="variable">step</span></a> <a class="idref" href="ITreesEquiv.html#i:5"><span class="id" title="variable">i</span></a> <span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="ITreesEquiv.html#x:6"><span class="id" title="variable">x</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#inl"><span class="id" title="constructor">inl</span></a> <span class="id" title="var">i</span> ⇒ <span class="id" title="definition">iter</span> <a class="idref" href="ITreesEquiv.html#IterLaws.step"><span class="id" title="variable">step</span></a> <a class="idref" href="ITreesEquiv.html#i:5"><span class="id" title="variable">i</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#inr"><span class="id" title="constructor">inr</span></a> <span class="id" title="var">v</span> ⇒ <span class="id" title="method">ret</span> <span class="id" title="var">v</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+<div class="togglescript" id="proofcontrol1" onclick="toggleDisplay('proof1');toggleDisplay('proofcontrol1')"><span class="show"></span></div>
+<div class="proofscript" id="proof1" onclick="toggleDisplay('proof1');toggleDisplay('proofcontrol1')">
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">i</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">unfold_iter_ktree</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;NOTE:&nbsp;We'll&nbsp;see&nbsp;this&nbsp;theorem&nbsp;later...&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <span class="id" title="lemma">eutt_clo_bind</span>. <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">u<sub>2</sub></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">tau_eutt</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+
+<div class="doc">
+<a id="lab202"></a><h3 class="section">Iter laws, more abstractly</h3>
+
+<div class="paragraph"> </div>
+
+ If we work with the so-called Kleisli category where "functions"
+  (morphisms) are of the type <span class="inlinecode"><span class="id" title="var">A</span></span> <span class="inlinecode">→</span> <span class="inlinecode"><span class="id" title="var">M</span></span> <span class="inlinecode"><span class="id" title="var">B</span></span> and we write <span class="inlinecode"><span class="id" title="var">f</span></span> <span class="inlinecode">&gt;&gt;&gt;</span> <span class="inlinecode"><span class="id" title="var">g</span></span> for function
+  composition and ⩯ for pointwise equivalence, we have these rules: 
+<div class="paragraph"> </div>
+
+
+<div class="paragraph"> </div>
+
+<br/>
+<span class="inlinecode">●    <span class="id" title="var">iter</span> <span class="id" title="var">step</span> ⩯ <span class="id" title="var">step</span> &gt;&gt;&gt; <span class="id" title="tactic">case</span> (<span class="id" title="var">iter</span> <span class="id" title="var">step</span>) <span class="id" title="var">id</span> <br/>
+<br/>
+●   (<span class="id" title="var">iter</span> <span class="id" title="var">step</span> &gt;&gt;&gt; <span class="id" title="var">k</span>) ⩯ <span class="id" title="var">iter</span> (<span class="id" title="var">step</span> &gt;&gt;&gt; <span class="id" title="var">bimap</span> <span class="id" title="var">k</span> <span class="id" title="var">id</span>)<br/>
+<br/>
+●    <span class="id" title="var">iter</span> (<span class="id" title="var">iter</span> <span class="id" title="var">step</span>) ⩯ <span class="id" title="var">iter</span> (<span class="id" title="var">step</span> &gt;&gt;&gt; <span class="id" title="tactic">case</span> <span class="id" title="var">inl</span> <span class="id" title="var">id</span>)
+</span>
+</div>
+
+<div class="doc">
+<a id="lab203"></a><h2 class="section">Relational Equivalence</h2>
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Module</span> <a id="EqMR" class="idref" href="#EqMR"><span class="id" title="module">EqMR</span></a>.<br/>
+</div>
+
+<div class="doc">
+Heterogeneous binary relations: 
+</div>
+<div class="code">
+
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="EqMR.relationH" class="idref" href="#EqMR.relationH"><span class="id" title="definition">relationH</span></a> (<a id="A:8" class="idref" href="#A:8"><span class="id" title="binder">A</span></a> <a id="B:9" class="idref" href="#B:9"><span class="id" title="binder">B</span></a> : <span class="id" title="keyword">Type</span>) := <a class="idref" href="ITreesEquiv.html#A:8"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="ITreesEquiv.html#B:9"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span>.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Section</span> <a id="EqMR.EqmR" class="idref" href="#EqMR.EqmR"><span class="id" title="section">EqmR</span></a>.<br/>
+</div>
+
+<div class="doc">
+We consider heterogeneous relations on computations parameterized by a
+     relation on the return types 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Class</span> <a id="EqMR.EqmR" class="idref" href="#EqMR.EqmR"><span class="id" title="record">EqmR</span></a> (<a id="m:10" class="idref" href="#m:10"><span class="id" title="binder">m</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>) : <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <a id="EqMR.eqmR" class="idref" href="#EqMR.eqmR"><span class="id" title="projection">eqmR</span></a> : <span class="id" title="keyword">∀</span> {<a id="A:12" class="idref" href="#A:12"><span class="id" title="binder">A</span></a> <a id="B:13" class="idref" href="#B:13"><span class="id" title="binder">B</span></a> : <span class="id" title="keyword">Type</span>} (<a id="R:14" class="idref" href="#R:14"><span class="id" title="binder">R</span></a> : <a class="idref" href="ITreesEquiv.html#EqMR.relationH"><span class="id" title="definition">relationH</span></a> <a class="idref" href="ITreesEquiv.html#A:12"><span class="id" title="variable">A</span></a> <a class="idref" href="ITreesEquiv.html#B:13"><span class="id" title="variable">B</span></a>), <a class="idref" href="ITreesEquiv.html#EqMR.relationH"><span class="id" title="definition">relationH</span></a> (<a class="idref" href="ITreesEquiv.html#m:10"><span class="id" title="variable">m</span></a> <a class="idref" href="ITreesEquiv.html#A:12"><span class="id" title="variable">A</span></a>) (<a class="idref" href="ITreesEquiv.html#m:10"><span class="id" title="variable">m</span></a> <a class="idref" href="ITreesEquiv.html#B:13"><span class="id" title="variable">B</span></a>) }.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">End</span> <a class="idref" href="ITreesEquiv.html#EqMR.EqmR"><span class="id" title="section">EqmR</span></a>.<br/>
+<span class="id" title="keyword">Infix</span> <a id="4e4ca7f1b85894c3e7a10fe86c52d3a<sub>9</sub>" class="idref" href="#4e4ca7f1b85894c3e7a10fe86c52d3a<sub>9</sub>"><span class="id" title="notation">&quot;</span></a>≈{ R  }" := (<a class="idref" href="ITreesEquiv.html#EqMR.eqmR"><span class="id" title="method">eqmR</span></a> <span class="id" title="var">R</span>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 30) : <span class="id" title="var">cat_scope</span>.<br/>
+<span class="id" title="keyword">Notation</span> <a id="798ea51e6312f6ef9b51c9710ded9faf" class="idref" href="#798ea51e6312f6ef9b51c9710ded9faf"><span class="id" title="notation">&quot;</span></a>t<sub>1</sub> ≋ t<sub>2</sub>" := (<a class="idref" href="ITreesEquiv.html#EqMR.eqmR"><span class="id" title="method">eqmR</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#eq"><span class="id" title="inductive">eq</span></a> <span class="id" title="var">t<sub>1</sub></span> <span class="id" title="var">t<sub>2</sub></span>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 40) : <span class="id" title="var">cat_scope</span>.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Arguments</span> <a class="idref" href="ITreesEquiv.html#EqMR.eqmR"><span class="id" title="method">eqmR</span></a> {<span class="id" title="var">m</span> <span class="id" title="var">_</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span>}.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">RelNotations</span>.<br/>
+<span class="id" title="keyword">Local Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">relationH_scope</span>.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">End</span> <a class="idref" href="ITreesEquiv.html#EqMR"><span class="id" title="module">EqMR</span></a>.<br/><hr class='doublespaceincode'/>
+<span class="comment">(*&nbsp;2024-06-07&nbsp;10:32&nbsp;*)</span><br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="coqindex.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="common/css/sf.css" rel="stylesheet" type="text/css" />
+<title>Preface</title>
+<link href="common/jquery-ui/jquery-ui.css" rel="stylesheet">
+<script src="common/jquery-ui/external/jquery/jquery.js"></script>
+<script src="common/jquery-ui/jquery-ui.js"></script>
+<script src="common/toggleproofs.js"></script>
+<link href="common/css/rip.css" rel="stylesheet" type="text/css"/>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+<div id='logoinheader'><a href='https://softwarefoundations.cis.upenn.edu'>
+<img src='common/media/image/sf_logo_sm.png' alt='Software Foundations Logo'></a></div>
+<div class='booktitleinheader'><a href='index.html'>Volume 7: Reasoning about Interactive Programs</a></div>
+<ul id='menu'>
+   <li class='section_name'><a href='toc.html'>Table of Contents</a></li>
+   <li class='section_name'><a href='coqindex.html'>Index</a></li>
+</ul>
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Preface</h1>
+
+
+<div class="doc">
+
+<div class="paragraph"> </div>
+
+ This volume of <i>Software Foundations</i> TODO  
+<div class="paragraph"> </div>
+
+<a id="lab10"></a><h1 class="section">Setup</h1>
+
+<div class="paragraph"> </div>
+
+ For working with this material, you will need to install Coq and the ITrees
+    Library.  To do this, install <span class="inlinecode"><span class="id" title="var">opam</span></span> (OS specific) which is the <span class="inlinecode"><span class="id" title="var">OCaml</span></span> platform
+    package manager.  Add the Coq release distribution to <span class="inlinecode"><span class="id" title="var">opam</span></span>'s databased, and then use <span class="inlinecode"><span class="id" title="var">opam</span></span> to install <span class="inlinecode"><span class="id" title="var">coq</span></span>, <span class="inlinecode"><span class="id" title="var">coq</span>-<span class="id" title="var">itree</span></span>, <span class="inlinecode"><span class="id" title="var">coq</span>-<span class="id" title="var">coinduction</span></span> as shown below:
+
+<div class="paragraph"> </div>
+
+<pre>
+opam repo add coq-released <a href='https://coq.inria.fr/opam/released'>https://coq.inria.fr/opam/released</a>
+opam install coq
+opam install coq-itree
+opam install coq-coinduction
+</pre>
+    More detailed instructions about the Interaction Trees library can be found here:
+       <a href="https://github.com/DeepSpec/InteractionTrees/"><span class="inlineref" <a href='https://github.com/DeepSpec/InteractionTrees/</span></a>'>https://github.com/DeepSpec/InteractionTrees/</span></a></a>
+
+<div class="paragraph"> </div>
+
+   Once you have installed Coq and the <span class="inlinecode"><span class="id" title="var">coq</span>-<span class="id" title="var">itree</span></span> library, you will need to compile the <span class="inlinecode">.<span class="id" title="var">v</span></span> files by 
+   running <span class="inlinecode"><span class="id" title="var">make</span></span> in the source directory.  This creates a Coq library called <span class="inlinecode"><span class="id" title="var">RIP</span></span>, which is used for 
+   importing the project code.
+
+<div class="paragraph"> </div>
+
+<pre>
+make
+</pre>
+
+<div class="paragraph"> </div>
+
+   This material assumes that you have proficiency in Coq up to (and including) <span class="inlinecode"><span class="id" title="var">Imp.v</span></span> and the <span class="inlinecode"><span class="id" title="var">Hoare.v</span></span> files from Software Foundations and Programming Language Foundations, but is self contained otherwise.
+
+<div class="paragraph"> </div>
+
+   Start (if necessary) with a refresher on <span class="inlinecode"><span class="id" title="var">Imp.v</span></span> then try  <a href="Monads.html"><span class="inlineref">Monads</span></a>, <a href="Free.html"><span class="inlineref">Free</span></a>, <a href="ITrees.html"><span class="inlineref">ITrees</span></a>,
+   <a href="ImpDenotation.html"><span class="inlineref">ImpDenotation</span></a>, <a href="ImpEquiv.html"><span class="inlineref">ImpEquiv</span></a>, and <a href="Hoare3.html"><span class="inlineref">Hoare3</span></a>.
+
+<div class="paragraph"> </div>
+
+    
+</div>
+
+<div class="doc">
+<a id="lab11"></a><h1 class="section">Practicalities</h1>
+<a id="lab12"></a><h2 class="section">Recommended Citation Format</h2>
+
+<div class="paragraph"> </div>
+
+ If you want to refer to this volume in your own writing, please
+    do so as follows:
+<br/>
+<span class="inlinecode">&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id" title="var">book</span>            {<span class="id" title="var">Zdancewic</span>:<span class="id" title="var">SF<sub>7</sub></span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">author</span>       =   {<span class="id" title="var">Steve</span> <span class="id" title="var">Zdancewic</span> <span class="id" title="var">and</span><br/>
+<span class="id" title="var">Yannick</span> <span class="id" title="var">Zakowski</span> <span class="id" title="var">and</span><br/>
+<span class="id" title="var">Lef</span> <span class="id" title="var">Ioannidis</span> <span class="id" title="var">and</span><br/>
+<span class="id" title="var">Jessica</span> <span class="id" title="var">Shi</span>},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">editor</span>       =   {<span class="id" title="var">Benjamin</span> <span class="id" title="var">C</span>. <span class="id" title="var">Pierce</span>},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">title</span>        =   "Reasoning about Interactive Programs",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">series</span>       =   "Software Foundations",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">volume</span>       =   "7",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">year</span>         =   "2024",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">publisher</span>    =   "Electronic textbook",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">note</span>         =   {<span class="id" title="var">Version</span> 0.1, \<span class="id" title="var">URL</span>{<span class="id" title="var">http</span>://<span class="id" title="var">softwarefoundations.cis.upenn.edu</span>} },<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}
+</span>
+<div class="paragraph"> </div>
+
+<a id="lab13"></a><h1 class="section">Thanks</h1>
+
+<div class="paragraph"> </div>
+
+ Development of the <i>Software Foundations</i> series has been
+    supported, in part, by the National Science Foundation under the
+    NSF Expeditions grant 1521523, <i>The Science of Deep
+    Specification</i>.  Work on this volume was also supported by TODO 
+</div>
+<div class="code">
+
+<span class="comment">(*&nbsp;2024-06-07&nbsp;10:32&nbsp;*)</span><br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="coqindex.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

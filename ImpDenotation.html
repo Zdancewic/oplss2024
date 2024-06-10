@@ -1,0 +1,316 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="common/css/sf.css" rel="stylesheet" type="text/css" />
+<title>ImpDenotation</title>
+<link href="common/jquery-ui/jquery-ui.css" rel="stylesheet">
+<script src="common/jquery-ui/external/jquery/jquery.js"></script>
+<script src="common/jquery-ui/jquery-ui.js"></script>
+<script src="common/toggleproofs.js"></script>
+<link href="common/css/rip.css" rel="stylesheet" type="text/css"/>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+<div id='logoinheader'><a href='https://softwarefoundations.cis.upenn.edu'>
+<img src='common/media/image/sf_logo_sm.png' alt='Software Foundations Logo'></a></div>
+<div class='booktitleinheader'><a href='index.html'>Volume 7: Reasoning about Interactive Programs</a></div>
+<ul id='menu'>
+   <li class='section_name'><a href='toc.html'>Table of Contents</a></li>
+   <li class='section_name'><a href='coqindex.html'>Index</a></li>
+</ul>
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">ImpDenotation</h1>
+
+
+<div class="doc">
+<a id="lab204"></a><h2 class="section">Imp Semantics, Denotationally</h2>
+
+<div class="paragraph"> </div>
+
+
+<div class="paragraph"> </div>
+
+  Through this course, we have notably seen that infinite behaviors
+  of systems are naturally modelled as coinductive data-types, the
+  equivalence of such systems as bisimulations, and that co-induction
+  is hence a central tool to reason about these systems.
+
+<div class="paragraph"> </div>
+
+  One particular class of such systems are general purpose, Turing-complete,
+  programming languages. In this project, we turn our attention to Imp¹, a
+  simple imperative, sequential, programming language equipped with a global
+  memory and loops.
+
+<div class="paragraph"> </div>
+
+<a id="lab205"></a><h3 class="section">Representing Imp as Interaction Trees</h3>
+
+<div class="paragraph"> </div>
+
+ Imp programs interact with a memory. We will represent these interactions
+   through read and writes events 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Variant</span> <a id="MemE" class="idref" href="#MemE"><span class="id" title="inductive">MemE</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;| <a id="Read" class="idref" href="#Read"><span class="id" title="constructor">Read</span></a>  (<a id="x:3" class="idref" href="#x:3"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://coq.inria.fr/library//Coq.Strings.String.html#string"><span class="id" title="inductive">string</span></a>)           : 	<a class="idref" href="ImpDenotation.html#MemE:1"><span class="id" title="inductive">MemE</span></a> <a class="idref" href="ImpDenotation.html#val"><span class="id" title="abbreviation">val</span></a><br/>
+&nbsp;&nbsp;| <a id="Write" class="idref" href="#Write"><span class="id" title="constructor">Write</span></a> (<a id="x:4" class="idref" href="#x:4"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://coq.inria.fr/library//Coq.Strings.String.html#string"><span class="id" title="inductive">string</span></a>) (<a id="v:5" class="idref" href="#v:5"><span class="id" title="binder">v</span></a> : <a class="idref" href="ImpDenotation.html#val"><span class="id" title="abbreviation">val</span></a>) : 	<a class="idref" href="ImpDenotation.html#MemE:1"><span class="id" title="inductive">MemE</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a><br/>
+.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Definition</span> <a id="rd" class="idref" href="#rd"><span class="id" title="definition">rd</span></a> <a id="x:6" class="idref" href="#x:6"><span class="id" title="binder">x</span></a>   := <span class="id" title="definition">ITree.trigger</span> (<a class="idref" href="ImpDenotation.html#Read"><span class="id" title="constructor">Read</span></a> <a class="idref" href="ImpDenotation.html#x:6"><span class="id" title="variable">x</span></a>).<br/>
+<span class="id" title="keyword">Definition</span> <a id="wr" class="idref" href="#wr"><span class="id" title="definition">wr</span></a> <a id="x:7" class="idref" href="#x:7"><span class="id" title="binder">x</span></a> <a id="v:8" class="idref" href="#v:8"><span class="id" title="binder">v</span></a> := <span class="id" title="definition">ITree.trigger</span> (<a class="idref" href="ImpDenotation.html#Write"><span class="id" title="constructor">Write</span></a> <a class="idref" href="ImpDenotation.html#x:7"><span class="id" title="variable">x</span></a> <a class="idref" href="ImpDenotation.html#v:8"><span class="id" title="variable">v</span></a>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab206"></a><h3 class="section">Arithmetic operations</h3>
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Variant</span> <a id="aop" class="idref" href="#aop"><span class="id" title="inductive">aop</span></a> :=  | <a id="op_plus" class="idref" href="#op_plus"><span class="id" title="constructor">op_plus</span></a> | <a id="op_minus" class="idref" href="#op_minus"><span class="id" title="constructor">op_minus</span></a> | <a id="op_mult" class="idref" href="#op_mult"><span class="id" title="constructor">op_mult</span></a>.<br/>
+</div>
+
+<div class="doc">
+And their semantics as Coq functions: 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="aop_sem" class="idref" href="#aop_sem"><span class="id" title="definition">aop_sem</span></a> (<a id="op:11" class="idref" href="#op:11"><span class="id" title="binder">op</span></a> : <a class="idref" href="ImpDenotation.html#aop"><span class="id" title="inductive">aop</span></a>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="ImpDenotation.html#op:11"><span class="id" title="variable">op</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="ImpDenotation.html#op_plus"><span class="id" title="constructor">op_plus</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Nat.html#add"><span class="id" title="definition">add</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="ImpDenotation.html#op_minus"><span class="id" title="constructor">op_minus</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Nat.html#sub"><span class="id" title="definition">sub</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="ImpDenotation.html#op_mult"><span class="id" title="constructor">op_mult</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Peano.html#mult"><span class="id" title="abbreviation">mult</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab207"></a><h3 class="section">Translation into ITrees</h3>
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Reserved Notation</span> &quot;⟦ a '⟧a'".<br/>
+<span class="id" title="keyword">Fixpoint</span> <a id="repr_aexp" class="idref" href="#repr_aexp"><span class="id" title="definition">repr_aexp</span></a> (<a id="a:13" class="idref" href="#a:13"><span class="id" title="binder">a</span></a> : <a class="idref" href="Imp.html#aexp"><span class="id" title="inductive">aexp</span></a>) : <span class="id" title="record">itree</span> <a class="idref" href="ImpDenotation.html#MemE"><span class="id" title="inductive">MemE</span></a> <a class="idref" href="ImpDenotation.html#val"><span class="id" title="abbreviation">val</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="aop:20" class="idref" href="#aop:20"><span class="id" title="binder">aop</span></a> <a id="op:15" class="idref" href="#op:15"><span class="id" title="binder">op</span></a> <a id="a:16" class="idref" href="#a:16"><span class="id" title="binder">a</span></a> <a id="b:17" class="idref" href="#b:17"><span class="id" title="binder">b</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="a:18" class="idref" href="#a:18"><span class="id" title="binder">a</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟦</span></a> <a class="idref" href="ImpDenotation.html#a:16"><span class="id" title="variable">a</span></a> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟧</span></a><a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">a</span></a><span class="id" title="notation">;;</span>        <span class="comment">(*&nbsp;We&nbsp;simply&nbsp;bind&nbsp;recursive&nbsp;calls&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="b:19" class="idref" href="#b:19"><span class="id" title="binder">b</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟦</span></a> <a class="idref" href="ImpDenotation.html#b:17"><span class="id" title="variable">b</span></a> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟧</span></a><a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">a</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">Ret</span> (<a class="idref" href="ImpDenotation.html#aop_sem"><span class="id" title="definition">aop_sem</span></a> <a class="idref" href="ImpDenotation.html#op:15"><span class="id" title="variable">op</span></a> <a class="idref" href="ImpDenotation.html#a:18"><span class="id" title="variable">a</span></a> <a class="idref" href="ImpDenotation.html#b:19"><span class="id" title="variable">b</span></a>)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="ImpDenotation.html#a:13"><span class="id" title="variable">a</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Imp.html#ANum"><span class="id" title="constructor">ANum</span></a> <span class="id" title="var">n</span>      ⇒ <span class="id" title="abbreviation">Ret</span> <span class="id" title="var">n</span> <span class="comment">(*&nbsp;Pure&nbsp;computation:&nbsp;we&nbsp;simply&nbsp;return&nbsp;n&nbsp;*)</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Imp.html#AId"><span class="id" title="constructor">AId</span></a> <span class="id" title="var">x</span>       ⇒ <a class="idref" href="ImpDenotation.html#rd"><span class="id" title="definition">rd</span></a> <span class="id" title="var">x</span>  <span class="comment">(*&nbsp;We&nbsp;put&nbsp;the&nbsp;responsability&nbsp;on&nbsp;the&nbsp;environment:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;we&nbsp;just&nbsp;"trigger"&nbsp;the&nbsp;read&nbsp;*)</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Imp.html#APlus"><span class="id" title="constructor">APlus</span></a> <span class="id" title="var">a</span> <span class="id" title="var">b</span> ⇒ <a class="idref" href="ImpDenotation.html#aop:20"><span class="id" title="variable">aop</span></a> <a class="idref" href="ImpDenotation.html#op_plus"><span class="id" title="constructor">op_plus</span></a> <a class="idref" href="ImpDenotation.html#a:13"><span class="id" title="variable">a</span></a> <span class="id" title="var">b</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Imp.html#AMinus"><span class="id" title="constructor">AMinus</span></a> <span class="id" title="var">a</span> <span class="id" title="var">b</span> ⇒ <a class="idref" href="ImpDenotation.html#aop:20"><span class="id" title="variable">aop</span></a> <a class="idref" href="ImpDenotation.html#op_minus"><span class="id" title="constructor">op_minus</span></a> <a class="idref" href="ImpDenotation.html#a:13"><span class="id" title="variable">a</span></a> <span class="id" title="var">b</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Imp.html#AMult"><span class="id" title="constructor">AMult</span></a> <span class="id" title="var">a</span> <span class="id" title="var">b</span> ⇒ <a class="idref" href="ImpDenotation.html#aop:20"><span class="id" title="variable">aop</span></a> <a class="idref" href="ImpDenotation.html#op_mult"><span class="id" title="constructor">op_mult</span></a> <a class="idref" href="ImpDenotation.html#a:13"><span class="id" title="variable">a</span></a> <span class="id" title="var">b</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+<span class="id" title="keyword">where</span> <a id="749971efbb1ba413576bd34b016bb092" class="idref" href="#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">&quot;</span></a>⟦ a '⟧a'" := (<a class="idref" href="ImpDenotation.html#repr_aexp:14"><span class="id" title="definition">repr_aexp</span></a> <span class="id" title="var">a</span>)<br/>
+.<br/>
+</div>
+
+<div class="doc">
+<a id="lab208"></a><h3 class="section">Boolean operations</h3>
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Reserved Notation</span> &quot;⟦ b '⟧b'".<br/>
+<span class="id" title="keyword">Fixpoint</span> <a id="repr_bexp" class="idref" href="#repr_bexp"><span class="id" title="definition">repr_bexp</span></a> (<a id="b:22" class="idref" href="#b:22"><span class="id" title="binder">b</span></a> : <a class="idref" href="Imp.html#bexp"><span class="id" title="inductive">bexp</span></a>) : <span class="id" title="record">itree</span> <a class="idref" href="ImpDenotation.html#MemE"><span class="id" title="inductive">MemE</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="ImpDenotation.html#b:22"><span class="id" title="variable">b</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">&lt;{</span></a> <a class="idref" href="Imp.html#:com::'true'"><span class="id" title="notation">true</span></a>  <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">}&gt;</span></a>     ⇒ <span class="id" title="abbreviation">Ret</span> <a class="idref" href="Imp.html#:::'true'"><span class="id" title="notation">true</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">&lt;{</span></a> <a class="idref" href="Imp.html#:com::'false'"><span class="id" title="notation">false</span></a> <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">}&gt;</span></a>     ⇒ <span class="id" title="abbreviation">Ret</span> <a class="idref" href="Imp.html#:::'false'"><span class="id" title="notation">false</span></a><br/>
+<br/>
+&nbsp;&nbsp;| <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">&lt;{</span></a> <span class="id" title="var">a<sub>1</sub></span> <a class="idref" href="Imp.html#9e5b22caf5d7cf490e97976162618c2a"><span class="id" title="notation">=</span></a> <span class="id" title="var">a<sub>2</sub></span> <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">}&gt;</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="x:25" class="idref" href="#x:25"><span class="id" title="binder">x</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟦</span></a> <span class="id" title="var">a<sub>1</sub></span> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟧</span></a><a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">a</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="y:26" class="idref" href="#y:26"><span class="id" title="binder">y</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟦</span></a> <span class="id" title="var">a<sub>2</sub></span> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟧</span></a><a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">a</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">Ret</span> (<a class="idref" href="ImpDenotation.html#x:25"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Nat.html#ad2ec4e405f68c46c0a176e3e94ae2e<sub>3</sub>"><span class="id" title="notation">=?</span></a> <a class="idref" href="ImpDenotation.html#y:26"><span class="id" title="variable">y</span></a>)<br/>
+<br/>
+&nbsp;&nbsp;| <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">&lt;{</span></a> <span class="id" title="var">a<sub>1</sub></span> <a class="idref" href="Imp.html#:com::x_'&lt;&gt;'_x"><span class="id" title="notation">≠</span></a> <span class="id" title="var">a<sub>2</sub></span> <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">}&gt;</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="x:27" class="idref" href="#x:27"><span class="id" title="binder">x</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟦</span></a> <span class="id" title="var">a<sub>1</sub></span> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟧</span></a><a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">a</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="y:28" class="idref" href="#y:28"><span class="id" title="binder">y</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟦</span></a> <span class="id" title="var">a<sub>2</sub></span> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟧</span></a><a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">a</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">Ret</span> (<a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#negb"><span class="id" title="definition">negb</span></a>(<a class="idref" href="ImpDenotation.html#x:27"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Nat.html#ad2ec4e405f68c46c0a176e3e94ae2e<sub>3</sub>"><span class="id" title="notation">=?</span></a> <a class="idref" href="ImpDenotation.html#y:28"><span class="id" title="variable">y</span></a>))<br/>
+<br/>
+&nbsp;&nbsp;| <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">&lt;{</span></a> <span class="id" title="var">a<sub>1</sub></span> <a class="idref" href="Imp.html#:com::x_'&gt;'_x"><span class="id" title="notation">&gt;</span></a> <span class="id" title="var">a<sub>2</sub></span> <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">}&gt;</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="x:29" class="idref" href="#x:29"><span class="id" title="binder">x</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟦</span></a> <span class="id" title="var">a<sub>1</sub></span> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟧</span></a><a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">a</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="y:30" class="idref" href="#y:30"><span class="id" title="binder">y</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟦</span></a> <span class="id" title="var">a<sub>2</sub></span> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟧</span></a><a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">a</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">Ret</span> (<a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#negb"><span class="id" title="definition">negb</span></a>(<a class="idref" href="ImpDenotation.html#x:29"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Nat.html#0f31f5c1c6b6a21a3a187247222bc9e<sub>4</sub>"><span class="id" title="notation">&lt;=?</span></a> <a class="idref" href="ImpDenotation.html#y:30"><span class="id" title="variable">y</span></a>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;| <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">&lt;{</span></a> <span class="id" title="var">a<sub>1</sub></span> <a class="idref" href="Imp.html#d43f15edd52d29ae8e0f90730a25ed5c"><span class="id" title="notation">≤</span></a> <span class="id" title="var">a<sub>2</sub></span> <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">}&gt;</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="x:31" class="idref" href="#x:31"><span class="id" title="binder">x</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟦</span></a> <span class="id" title="var">a<sub>1</sub></span> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟧</span></a><a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">a</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="y:32" class="idref" href="#y:32"><span class="id" title="binder">y</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟦</span></a> <span class="id" title="var">a<sub>2</sub></span> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟧</span></a><a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">a</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">Ret</span> (<a class="idref" href="ImpDenotation.html#x:31"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Nat.html#0f31f5c1c6b6a21a3a187247222bc9e<sub>4</sub>"><span class="id" title="notation">&lt;=?</span></a> <a class="idref" href="ImpDenotation.html#y:32"><span class="id" title="variable">y</span></a>)<br/>
+<br/>
+&nbsp;&nbsp;| <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">&lt;{</span></a> <span class="id" title="var">b<sub>1</sub></span> <a class="idref" href="Imp.html#:com::x_'&amp;&amp;'_x"><span class="id" title="notation">&amp;&amp;</span></a> <span class="id" title="var">b<sub>2</sub></span> <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">}&gt;</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="x:33" class="idref" href="#x:33"><span class="id" title="binder">x</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="ImpDenotation.html#8a2e87e11d401313a139f46e9659ad<sub>11</sub>"><span class="id" title="notation">⟦</span></a> <span class="id" title="var">b<sub>1</sub></span> <a class="idref" href="ImpDenotation.html#8a2e87e11d401313a139f46e9659ad<sub>11</sub>"><span class="id" title="notation">⟧</span></a><a class="idref" href="ImpDenotation.html#8a2e87e11d401313a139f46e9659ad<sub>11</sub>"><span class="id" title="notation">b</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="y:34" class="idref" href="#y:34"><span class="id" title="binder">y</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="ImpDenotation.html#8a2e87e11d401313a139f46e9659ad<sub>11</sub>"><span class="id" title="notation">⟦</span></a> <span class="id" title="var">b<sub>2</sub></span> <a class="idref" href="ImpDenotation.html#8a2e87e11d401313a139f46e9659ad<sub>11</sub>"><span class="id" title="notation">⟧</span></a><a class="idref" href="ImpDenotation.html#8a2e87e11d401313a139f46e9659ad<sub>11</sub>"><span class="id" title="notation">b</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">Ret</span> (<a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#andb"><span class="id" title="definition">andb</span></a> <a class="idref" href="ImpDenotation.html#x:33"><span class="id" title="variable">x</span></a> <a class="idref" href="ImpDenotation.html#y:34"><span class="id" title="variable">y</span></a>)<br/>
+<br/>
+&nbsp;&nbsp;| <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">&lt;{</span></a> <a class="idref" href="Imp.html#dfe50505b2b595242030c436d0d7d15f"><span class="id" title="notation">¬</span></a> <span class="id" title="var">b</span> <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">}&gt;</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="x:35" class="idref" href="#x:35"><span class="id" title="binder">x</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="ImpDenotation.html#8a2e87e11d401313a139f46e9659ad<sub>11</sub>"><span class="id" title="notation">⟦</span></a> <a class="idref" href="ImpDenotation.html#b:22"><span class="id" title="variable">b</span></a> <a class="idref" href="ImpDenotation.html#8a2e87e11d401313a139f46e9659ad<sub>11</sub>"><span class="id" title="notation">⟧</span></a><a class="idref" href="ImpDenotation.html#8a2e87e11d401313a139f46e9659ad<sub>11</sub>"><span class="id" title="notation">b</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">Ret</span> (<a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#negb"><span class="id" title="definition">negb</span></a> <a class="idref" href="ImpDenotation.html#x:35"><span class="id" title="variable">x</span></a>)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+<span class="id" title="keyword">where</span> <a id="8a2e87e11d401313a139f46e9659ad<sub>11</sub>" class="idref" href="#8a2e87e11d401313a139f46e9659ad<sub>11</sub>"><span class="id" title="notation">&quot;</span></a>⟦ b '⟧b'" := (<a class="idref" href="ImpDenotation.html#repr_bexp:23"><span class="id" title="definition">repr_bexp</span></a> <span class="id" title="var">b</span>)<br/>
+.<br/>
+</div>
+
+<div class="doc">
+<a id="lab209"></a><h3 class="section">Representation of commands</h3>
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Reserved Notation</span> &quot;⟦ c ⟧".<br/>
+<span class="id" title="keyword">Fixpoint</span> <a id="repr_com" class="idref" href="#repr_com"><span class="id" title="definition">repr_com</span></a> (<a id="c:36" class="idref" href="#c:36"><span class="id" title="binder">c</span></a> : <a class="idref" href="Imp.html#com"><span class="id" title="inductive">com</span></a>) : <span class="id" title="record">itree</span> <a class="idref" href="ImpDenotation.html#MemE"><span class="id" title="inductive">MemE</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="ImpDenotation.html#c:36"><span class="id" title="variable">c</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">&lt;{</span></a> <a class="idref" href="Imp.html#:com:com_scope:'skip'"><span class="id" title="notation">skip</span></a> <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">}&gt;</span></a> ⇒ <span class="id" title="abbreviation">Ret</span> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#tt"><span class="id" title="constructor">tt</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">&lt;{</span></a> <span class="id" title="var">x</span> <a class="idref" href="Imp.html#91e9aa710642047a93142bdf557f1a1b"><span class="id" title="notation">:=</span></a> <span class="id" title="var">a</span> <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">}&gt;</span></a> ⇒ <a id="v:39" class="idref" href="#v:39"><span class="id" title="binder">v</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟦</span></a> <span class="id" title="var">a</span> <a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">⟧</span></a><a class="idref" href="ImpDenotation.html#749971efbb1ba413576bd34b016bb092"><span class="id" title="notation">a</span></a><span class="id" title="notation">;;</span> <a class="idref" href="ImpDenotation.html#wr"><span class="id" title="definition">wr</span></a> <span class="id" title="var">x</span> <a class="idref" href="ImpDenotation.html#v:39"><span class="id" title="variable">v</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">&lt;{</span></a> <span class="id" title="var">c<sub>1</sub></span> <a class="idref" href="Imp.html#313afe74ec81f2da17d8e7bca3b042e<sub>7</sub>"><span class="id" title="notation">;</span></a> <span class="id" title="var">c<sub>2</sub></span> <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">}&gt;</span></a> ⇒ <a class="idref" href="ImpDenotation.html#a28bfd0a35de9a5c69829697b021d0f<sub>5</sub>"><span class="id" title="notation">⟦</span></a><span class="id" title="var">c<sub>1</sub></span><a class="idref" href="ImpDenotation.html#a28bfd0a35de9a5c69829697b021d0f<sub>5</sub>"><span class="id" title="notation">⟧</span></a><span class="id" title="notation">;;</span> <a class="idref" href="ImpDenotation.html#a28bfd0a35de9a5c69829697b021d0f<sub>5</sub>"><span class="id" title="notation">⟦</span></a><span class="id" title="var">c<sub>2</sub></span><a class="idref" href="ImpDenotation.html#a28bfd0a35de9a5c69829697b021d0f<sub>5</sub>"><span class="id" title="notation">⟧</span></a><br/>
+<br/>
+&nbsp;&nbsp;| <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">&lt;{</span></a> <a class="idref" href="Imp.html#:com:com_scope:'if'_x_'then'_x_'else'_x_'end'"><span class="id" title="notation">if</span></a> <span class="id" title="var">b</span> <a class="idref" href="Imp.html#:com:com_scope:'if'_x_'then'_x_'else'_x_'end'"><span class="id" title="notation">then</span></a> <span class="id" title="var">c<sub>1</sub></span> <a class="idref" href="Imp.html#:com:com_scope:'if'_x_'then'_x_'else'_x_'end'"><span class="id" title="notation">else</span></a> <span class="id" title="var">c<sub>2</sub></span> <a class="idref" href="Imp.html#:com:com_scope:'if'_x_'then'_x_'else'_x_'end'"><span class="id" title="notation">end</span></a> <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">}&gt;</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="x:40" class="idref" href="#x:40"><span class="id" title="binder">x</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="ImpDenotation.html#8a2e87e11d401313a139f46e9659ad<sub>11</sub>"><span class="id" title="notation">⟦</span></a> <span class="id" title="var">b</span> <a class="idref" href="ImpDenotation.html#8a2e87e11d401313a139f46e9659ad<sub>11</sub>"><span class="id" title="notation">⟧</span></a><a class="idref" href="ImpDenotation.html#8a2e87e11d401313a139f46e9659ad<sub>11</sub>"><span class="id" title="notation">b</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <a class="idref" href="ImpDenotation.html#x:40"><span class="id" title="variable">x</span></a> <span class="id" title="keyword">then</span> <a class="idref" href="ImpDenotation.html#a28bfd0a35de9a5c69829697b021d0f<sub>5</sub>"><span class="id" title="notation">⟦</span></a><span class="id" title="var">c<sub>1</sub></span><a class="idref" href="ImpDenotation.html#a28bfd0a35de9a5c69829697b021d0f<sub>5</sub>"><span class="id" title="notation">⟧</span></a> <span class="id" title="keyword">else</span> <a class="idref" href="ImpDenotation.html#a28bfd0a35de9a5c69829697b021d0f<sub>5</sub>"><span class="id" title="notation">⟦</span></a><span class="id" title="var">c<sub>2</sub></span><a class="idref" href="ImpDenotation.html#a28bfd0a35de9a5c69829697b021d0f<sub>5</sub>"><span class="id" title="notation">⟧</span></a><br/>
+<br/>
+&nbsp;&nbsp;| <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">&lt;{</span></a> <a class="idref" href="Imp.html#:com:com_scope:'while'_x_'do'_x_'end'"><span class="id" title="notation">while</span></a> <span class="id" title="var">b</span> <a class="idref" href="Imp.html#:com:com_scope:'while'_x_'do'_x_'end'"><span class="id" title="notation">do</span></a> <span class="id" title="var">c</span> <a class="idref" href="Imp.html#:com:com_scope:'while'_x_'do'_x_'end'"><span class="id" title="notation">end</span></a> <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">}&gt;</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Utils.html#repeat"><span class="id" title="definition">repeat</span></a> (                   <span class="comment">(*&nbsp;&lt;==&nbsp;NOTE:&nbsp;use&nbsp;of&nbsp;_repeat_&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="x:41" class="idref" href="#x:41"><span class="id" title="binder">x</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="ImpDenotation.html#8a2e87e11d401313a139f46e9659ad<sub>11</sub>"><span class="id" title="notation">⟦</span></a><span class="id" title="var">b</span><a class="idref" href="ImpDenotation.html#8a2e87e11d401313a139f46e9659ad<sub>11</sub>"><span class="id" title="notation">⟧</span></a><a class="idref" href="ImpDenotation.html#8a2e87e11d401313a139f46e9659ad<sub>11</sub>"><span class="id" title="notation">b</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <a class="idref" href="ImpDenotation.html#x:41"><span class="id" title="variable">x</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">then</span> <a class="idref" href="ImpDenotation.html#a28bfd0a35de9a5c69829697b021d0f<sub>5</sub>"><span class="id" title="notation">⟦</span></a><a class="idref" href="ImpDenotation.html#c:36"><span class="id" title="variable">c</span></a><a class="idref" href="ImpDenotation.html#a28bfd0a35de9a5c69829697b021d0f<sub>5</sub>"><span class="id" title="notation">⟧</span></a><span class="id" title="notation">;;</span> <span class="id" title="abbreviation">Ret</span> (<a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#inl"><span class="id" title="constructor">inl</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#tt"><span class="id" title="constructor">tt</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="abbreviation">Ret</span> (<a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#inr"><span class="id" title="constructor">inr</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#tt"><span class="id" title="constructor">tt</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+<span class="id" title="keyword">where</span> <a id="a28bfd0a35de9a5c69829697b021d0f<sub>5</sub>" class="idref" href="#a28bfd0a35de9a5c69829697b021d0f<sub>5</sub>"><span class="id" title="notation">&quot;</span></a>⟦ c ⟧" := (<a class="idref" href="ImpDenotation.html#repr_com:37"><span class="id" title="definition">repr_com</span></a> <span class="id" title="var">c</span>)<br/>
+.<br/>
+</div>
+
+<div class="doc">
+<a id="lab210"></a><h3 class="section">Some observations</h3>
+
+<div class="paragraph"> </div>
+
+ This version of the Imp semantics is:
+<ul class="doclist">
+<li> defined by <i>structural induction</i> on the syntax.
+
+</li>
+<li> is <i>parametric</i> in the interpretation of memory events
+
+</li>
+<li> is compatible with extraction (for interpretation)
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+ In some sense, this is still <i>syntactic</i>, but it already has "unfolded" the
+control-flow of the program into a big (possibly infinite) tree. That will make
+proving <span class="inlinecode"><span class="id" title="var">Imp</span></span> equivalences easier.  
+<div class="paragraph"> </div>
+
+<a id="lab211"></a><h3 class="section">Memory Event Handlers</h3>
+
+<div class="paragraph"> </div>
+
+ Here, <span class="inlinecode"><span class="id" title="var">stateT</span></span> is a <i>monad transformer</i> that lifts a monadic
+computation into the <span class="inlinecode"><span class="id" title="var">state</span></span> monad: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Notation</span> <a id="M" class="idref" href="#M"><span class="id" title="abbreviation">M</span></a> := (<span class="id" title="definition">stateT</span> <a class="idref" href="ImpDenotation.html#mem"><span class="id" title="definition">mem</span></a> (<span class="id" title="record">itree</span> <span class="id" title="inductive">void1</span>)).<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Example</span> <a id="Mdef" class="idref" href="#Mdef"><span class="id" title="definition">Mdef</span></a> : <a class="idref" href="ImpDenotation.html#M"><span class="id" title="abbreviation">M</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">(</span></a><a class="idref" href="ImpDenotation.html#mem"><span class="id" title="definition">mem</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="record">itree</span> <span class="id" title="inductive">void1</span> (<a class="idref" href="ImpDenotation.html#mem"><span class="id" title="definition">mem</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac<sub>4</sub>"><span class="id" title="notation">×</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a>)<a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">)</span></a>.<br/>
+</div>
+
+<div class="doc">
+The handler for <span class="inlinecode"><span class="id" title="var">MemE</span></span> events 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="handle_Mem" class="idref" href="#handle_Mem"><span class="id" title="definition">handle_Mem</span></a> : <a class="idref" href="ImpDenotation.html#MemE"><span class="id" title="inductive">MemE</span></a> <span class="id" title="notation">~&gt;</span> <a class="idref" href="ImpDenotation.html#M"><span class="id" title="abbreviation">M</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <a id="e:42" class="idref" href="#e:42"><span class="id" title="binder">e</span></a> <a id="st:43" class="idref" href="#st:43"><span class="id" title="binder">st</span></a> ⇒ <span class="id" title="keyword">match</span> <a class="idref" href="ImpDenotation.html#e:42"><span class="id" title="variable">e</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="ImpDenotation.html#Read"><span class="id" title="constructor">Read</span></a> <span class="id" title="var">x</span>    ⇒ <span class="id" title="abbreviation">Ret</span> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="ImpDenotation.html#st:43"><span class="id" title="variable">st</span></a><a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="ImpDenotation.html#st:43"><span class="id" title="variable">st</span></a> <span class="id" title="var">x</span><a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="ImpDenotation.html#Write"><span class="id" title="constructor">Write</span></a> <span class="id" title="var">x</span> <span class="id" title="var">v</span> ⇒ <span class="id" title="abbreviation">Ret</span> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="var">x</span> <a class="idref" href="Maps.html#630986d105c0f1782d085b9a306379a<sub>7</sub>"><span class="id" title="notation">!<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span></span></a> <span class="id" title="var">v</span><a class="idref" href="Maps.html#630986d105c0f1782d085b9a306379a<sub>7</sub>"><span class="id" title="notation">;</span></a> <a class="idref" href="ImpDenotation.html#st:43"><span class="id" title="variable">st</span></a><a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#tt"><span class="id" title="constructor">tt</span></a><a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab212"></a><h3 class="section">Finally, some nice notation for Imp semantics</h3>
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Notation</span> <a id="7e366676838614efda76d1a99485c90a" class="idref" href="#7e366676838614efda76d1a99485c90a"><span class="id" title="notation">&quot;</span></a>'ℑ'" := (<span class="id" title="definition">interp_state</span> <a class="idref" href="ImpDenotation.html#handle_Mem"><span class="id" title="definition">handle_Mem</span></a>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0).<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Definition</span> <a id="model_com" class="idref" href="#model_com"><span class="id" title="definition">model_com</span></a> : <a class="idref" href="Imp.html#com"><span class="id" title="inductive">com</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="ImpDenotation.html#M"><span class="id" title="abbreviation">M</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="c:45" class="idref" href="#c:45"><span class="id" title="binder">c</span></a> ⇒ <a class="idref" href="ImpDenotation.html#7e366676838614efda76d1a99485c90a"><span class="id" title="notation">ℑ</span></a> <a class="idref" href="ImpDenotation.html#7e366676838614efda76d1a99485c90a"><span class="id" title="notation">⟦</span></a> <a class="idref" href="ImpDenotation.html#7e366676838614efda76d1a99485c90a"><span class="id" title="notation">c</span></a> <a class="idref" href="ImpDenotation.html#7e366676838614efda76d1a99485c90a"><span class="id" title="notation">⟧</span></a>.<br/>
+<span class="id" title="keyword">Notation</span> <a id="ce3ef97448c25e55e08ec9895edf62a<sub>4</sub>" class="idref" href="#ce3ef97448c25e55e08ec9895edf62a<sub>4</sub>"><span class="id" title="notation">&quot;</span></a>'⟦{' c '}⟧'" := (<a class="idref" href="ImpDenotation.html#model_com"><span class="id" title="definition">model_com</span></a> <span class="id" title="var">c</span>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab213"></a><h3 class="section">Running Factorial</h3>
+
+<div class="paragraph"> </div>
+
+ Now that we have a functional implementation of the <span class="inlinecode"><span class="id" title="var">Imp</span></span> semantics,
+ we can run it...
+
+<div class="paragraph"> </div>
+
+Unfortunately, the result has type <span class="inlinecode"><span class="id" title="var">string</span></span> <span class="inlinecode">→</span> <span class="inlinecode"><span class="id" title="var">nat</span></span>, and Coq prints it 
+in a very ugly way, so we've cheated...
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Eval</span> <span class="id" title="tactic">compute</span> <span class="id" title="keyword">in</span> (<span class="id" title="definition">burn</span> 50 (<a class="idref" href="ImpDenotation.html#ce3ef97448c25e55e08ec9895edf62a<sub>4</sub>"><span class="id" title="notation">⟦{</span></a> <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">&lt;{</span></a> <a class="idref" href="Imp.html#X"><span class="id" title="definition">X</span></a> <a class="idref" href="Imp.html#91e9aa710642047a93142bdf557f1a1b"><span class="id" title="notation">:=</span></a> 5 <a class="idref" href="Imp.html#313afe74ec81f2da17d8e7bca3b042e<sub>7</sub>"><span class="id" title="notation">;</span></a> <a class="idref" href="Imp.html#fact_in_coq"><span class="id" title="definition">fact_in_coq</span></a> <a class="idref" href="Imp.html#23430cd9e427d30c054d4f029e39cb7f"><span class="id" title="notation">}&gt;</span></a> <a class="idref" href="ImpDenotation.html#ce3ef97448c25e55e08ec9895edf62a<sub>4</sub>"><span class="id" title="notation">}⟧</span></a> <a class="idref" href="ImpDenotation.html#ce3ef97448c25e55e08ec9895edf62a<sub>4</sub>"><span class="id" title="notation">(</span></a><a class="idref" href="ImpDenotation.html#ce3ef97448c25e55e08ec9895edf62a<sub>4</sub>"><span class="id" title="notation">fun</span></a> <a class="idref" href="ImpDenotation.html#ce3ef97448c25e55e08ec9895edf62a<sub>4</sub>"><span class="id" title="notation">_</span></a> <a class="idref" href="ImpDenotation.html#ce3ef97448c25e55e08ec9895edf62a<sub>4</sub>"><span class="id" title="notation">⇒</span></a> <a class="idref" href="ImpDenotation.html#ce3ef97448c25e55e08ec9895edf62a<sub>4</sub>"><span class="id" title="notation">0)</span></a>)).<br/>
+</div>
+
+<div class="doc">
+==&gt; 
+<br/>
+<span class="inlinecode"><span class="id" title="var">Ret</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">v</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">v</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| "Z" ⇒ 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| "Y" ⇒ 120<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| "X" ⇒ 5<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.)  : <span class="id" title="var">itree</span> <span class="id" title="var">mem</span> <span class="id" title="var">unit</span>
+</span>
+</div>
+
+<div class="doc">
+<a id="lab214"></a><h3 class="section">Exercise</h3>
+
+<div class="paragraph"> </div>
+
+ Challenge: add a "print" command to Imp. Use the following event signature. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Variant</span> <a id="ImpPrint.PrintE" class="idref" href="#ImpPrint.PrintE"><span class="id" title="inductive">PrintE</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;| <a id="ImpPrint.print" class="idref" href="#ImpPrint.print"><span class="id" title="constructor">print</span></a> (<a id="s:48" class="idref" href="#s:48"><span class="id" title="binder">s</span></a>:<a class="idref" href="http://coq.inria.fr/library//Coq.Strings.String.html#string"><span class="id" title="inductive">string</span></a>) : <a class="idref" href="ImpDenotation.html#PrintE:46"><span class="id" title="inductive">PrintE</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a>.<br/>
+</div>
+
+<div class="doc">
+Set up the semantics so that the new denotation of a command has the type: <span class="inlinecode"><span class="id" title="var">MP</span></span> <span class="inlinecode"><span class="id" title="var">unit</span></span>. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <a id="ImpPrint.MP" class="idref" href="#ImpPrint.MP"><span class="id" title="definition">MP</span></a> := <span class="id" title="definition">stateT</span> <a class="idref" href="ImpDenotation.html#mem"><span class="id" title="definition">mem</span></a> (<span class="id" title="record">itree</span> <a class="idref" href="ImpDenotation.html#ImpPrint.PrintE"><span class="id" title="inductive">PrintE</span></a>).<br/><hr class='doublespaceincode'/>
+
+<br/>
+<span class="comment">(*&nbsp;2024-06-07&nbsp;10:32&nbsp;*)</span><br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="coqindex.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

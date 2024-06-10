@@ -1,0 +1,45 @@
+#########################################################################
+                           QUICK START
+#########################################################################
+
+1. Install Docker
+2. Install VSCode
+  2.1.  add the Dev Containers extension to VSCode
+3. Open this folder in VSCode
+  3.1   re-open the folder in the VM
+
+(The first time you open the project, it will take a while to configure
+the VM - it installs OCaml, Coq, and the relevant libraries.)
+
+
+#########################################################################
+			  SLOWER START
+#########################################################################
+
+If you want to use Coq natively, you'll want to
+- install opam 
+- install OCaml (tested with 4.14.0)
+- and Coq (tested with 8.19.1)
+- install all of the OCaml/Coq dependencies mentioned in the
+  .devcontainer/Dockerfile 
+
+
+#########################################################################
+                           SOFTWARE FOUNDATIONS
+#########################################################################
+
+This directory contains both Coq scripts (.v files) and more readable
+HTML files for Volume 7? of the Software Foundations electronic
+textbook series.
+
+  - Preface.v or Preface.html
+    The place to start reading, including details on how to install
+    required software
+
+  - index.html
+    The book's cover page and navigation starting point
+
+  - LICENSE
+    Explanation of how these files may be redistributed
+
+

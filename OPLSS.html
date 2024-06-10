@@ -1,0 +1,285 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="common/css/sf.css" rel="stylesheet" type="text/css" />
+<title>OPLSS</title>
+<link href="common/jquery-ui/jquery-ui.css" rel="stylesheet">
+<script src="common/jquery-ui/external/jquery/jquery.js"></script>
+<script src="common/jquery-ui/jquery-ui.js"></script>
+<script src="common/toggleproofs.js"></script>
+<link href="common/css/rip.css" rel="stylesheet" type="text/css"/>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+<div id='logoinheader'><a href='https://softwarefoundations.cis.upenn.edu'>
+<img src='common/media/image/sf_logo_sm.png' alt='Software Foundations Logo'></a></div>
+<div class='booktitleinheader'><a href='index.html'>Volume 7: Reasoning about Interactive Programs</a></div>
+<ul id='menu'>
+   <li class='section_name'><a href='toc.html'>Table of Contents</a></li>
+   <li class='section_name'><a href='coqindex.html'>Index</a></li>
+</ul>
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">OPLSS</h1>
+
+
+<div class="doc">
+<a id="lab1"></a><h2 class="section">Formal Verification of Monadic Computations</h2>
+
+<div class="paragraph"> </div>
+
+ Steve Zdancewic 
+
+<div class="paragraph"> </div>
+
+    University <i>of</i> Pennsylvania
+
+<div class="paragraph"> </div>
+
+    OPLSS 2024
+ 
+<div class="paragraph"> </div>
+
+<a id="lab2"></a><h2 class="section">Many thanks to:</h2>
+
+<div class="paragraph"> </div>
+
+
+<div class="paragraph"> </div>
+
+<pre>
+Yannick Zakowski         Li-yao Xia
+Paul He                  Irene Yoon
+Lucas Silver             Lef Ioannidis
+Jessica Shi              Gary Chen
+Eduardo Gonzalez         Nathan Sobotka           
+Zak Sines                ...
+</pre>
+
+<div class="paragraph"> </div>
+
+<a id="lab3"></a><h2 class="section">Motivation</h2>
+
+<div class="paragraph"> </div>
+
+ Software <i>mostly</i> works, but there are many critical systems for which the
+effort of formal verification can warranted:
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> operating systems, web servers
+
+</li>
+<li> mission-critical code (flight-control, autopilot, ...)
+
+</li>
+<li> infrastructure &amp; tools like compilers 
+
+</li>
+<li> medical devices / control software 
+
+</li>
+<li> cryptography / cryptocurrencies / banking
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+<a id="lab4"></a><h2 class="section">Challenges</h2>
+
+<div class="paragraph"> </div>
+
+ Verifying systems of the kind mentioned above is non-trivial:
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> complex specifications
+
+</li>
+<li> complex behaviors: state, I/O, nontermination, nondeterminism
+
+</li>
+<li> scale &amp; cost
+
+</li>
+<li> ...
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+
+<div class="paragraph"> </div>
+
+<a id="lab5"></a><h2 class="section">Programming Languages</h2>
+
+<div class="paragraph"> </div>
+
+ PL lays the foundations needed to build reliable software:
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> abstractions for describing rich computational systems
+
+</li>
+<li> proof techniques for reasoning about them
+
+</li>
+<li> concepts of modularity &amp; compositionality that are important for scale
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+Success stories: 
+
+<div class="paragraph"> </div>
+
+<pre>
+     CompCert       CakeML
+     CertiKOS       Bedrock2 
+     sel4           IronFleet
+     FSCQ           RustBelt
+     Vellvm         Iris
+     ...            ...
+</pre>
+
+<div class="paragraph"> </div>
+
+<a id="lab6"></a><h2 class="section">These Lectures</h2>
+
+<div class="paragraph"> </div>
+
+ Reasoning about <i>monadic</i> (effectful) programs in Coq.
+
+<div class="paragraph"> </div>
+
+One approach that touches on many recurring themes at OPLSS and in
+formalizations in dependent type theory.  
+<div class="paragraph"> </div>
+
+<a id="lab7"></a><h2 class="section">Lecture Plan</h2>
+
+<div class="paragraph"> </div>
+
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> Formalizing Imperative Program Semantics in Coq: <span class="inlinecode"><span class="id" title="var">Imp</span></span>
+
+</li>
+<li> Monads, Equivalences, Monad Laws
+
+</li>
+<li> Free Monads 
+
+</li>
+<li> ITrees: Nontermination &amp; Loops
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="var">Imp</span></span> Semantics, Denotationally 
+
+</li>
+<li> Relational Reasoning
+
+</li>
+<li> Hoare Logic via Relational Reasoning
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="var">Imp</span></span> Optimizations
+
+</li>
+<li> Going Further: Vellvm ... Related Work
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+<a id="lab8"></a><h2 class="section">Coq Code</h2>
+
+<div class="paragraph"> </div>
+
+ These lecture slides are extracted from a literate Coq development in the
+style of Pierce et al.'s <i>Software Foundations</i>.
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> link to the source in the OPLSS slack
+
+</li>
+<li> assumes background of SF Volume 1 (and some parts of Volume 2)
+
+</li>
+<li> contains extended versions of much of the content
+
+</li>
+<li> is <i>work-in-progress</i>:  feedback welcome!
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+
+<div class="paragraph"> </div>
+
+<a id="lab9"></a><h2 class="section">OPLSS Connections</h2>
+
+<div class="paragraph"> </div>
+
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> Coq <i>is</i> a dependent type theory
+
+</li>
+<li> Logical Relations &amp; Relational Reasoning
+
+</li>
+<li> Foundations of proof theory 
+
+</li>
+<li> Algebra of Programming
+
+</li>
+<li> Program Verification
+
+</li>
+<li> Monads: Information Flow &amp; Probabilistic Programming 
+
+</li>
+</ul>
+
+</div>
+<div class="code">
+
+<span class="comment">(*&nbsp;2024-06-10&nbsp;14:53&nbsp;*)</span><br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="coqindex.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

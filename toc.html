@@ -1,0 +1,552 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="common/css/sf.css" rel="stylesheet" type="text/css" />
+<title>Table of contents</title>
+<link href="common/jquery-ui/jquery-ui.css" rel="stylesheet">
+<script src="common/jquery-ui/external/jquery/jquery.js"></script>
+<script src="common/jquery-ui/jquery-ui.js"></script>
+<script src="common/toggleproofs.js"></script>
+<link href="common/css/rip.css" rel="stylesheet" type="text/css"/>
+</head>
+
+<body><script>
+$( function() {
+    var icons = {
+      header: "ui-icon-circle-arrow-e",
+      activeHeader: "ui-icon-circle-arrow-s"
+    };
+
+    $("#accordion").accordion({
+      collapsible : true,
+      active : false,
+      icons : icons,
+      heightStyle : 'content'
+    });
+
+    // Enable navigation links in section headers
+    $('#accordion').each(function() {
+      this.addEventListener('click', ev => {
+        if ($(ev.target).closest('a').length > 0) ev.stopPropagation();
+      }, {capture: true});
+    });
+  } );
+</script>
+
+
+<div id="page">
+
+<div id="header">
+<div id='logoinheader'><a href='https://softwarefoundations.cis.upenn.edu'>
+<img src='common/media/image/sf_logo_sm.png' alt='Software Foundations Logo'></a></div>
+<div class='booktitleinheader'><a href='index.html'>Volume 7: Reasoning about Interactive Programs</a></div>
+<ul id='menu'>
+   <li class='section_name'><a href='toc.html'>Table of Contents</a></li>
+   <li class='section_name'><a href='coqindex.html'>Index</a></li>
+</ul>
+</div>
+</div>
+
+<div id="main">
+
+<div id="toc">
+<div id="accordion">
+<h2><a href="OPLSS.html">OPLSS</a></h2>
+<div>
+<ul class="doclist">
+<li><div>
+<ul class="doclist">
+<li><a href="OPLSS.html#lab1">Formal Verification of Monadic Computations</a>
+
+</li>
+<li><a href="OPLSS.html#lab2">Many thanks to:</a>
+
+</li>
+<li><a href="OPLSS.html#lab3">Motivation</a>
+
+</li>
+<li><a href="OPLSS.html#lab4">Challenges</a>
+
+</li>
+<li><a href="OPLSS.html#lab5">Programming Languages</a>
+
+</li>
+<li><a href="OPLSS.html#lab6">These Lectures</a>
+
+</li>
+<li><a href="OPLSS.html#lab7">Lecture Plan</a>
+
+</li>
+<li><a href="OPLSS.html#lab8">Coq Code</a>
+
+</li>
+<li><a href="OPLSS.html#lab9">OPLSS Connections</a>
+
+</li>
+</ul>
+</div>
+
+</li>
+</ul>
+</div>
+<h2><a href="Preface.html">Preface</a></h2>
+<div>
+<ul class="doclist">
+<li><a href="Preface.html#lab10">Setup</a>
+
+</li>
+<li><a href="Preface.html#lab11">Practicalities</a>
+<div>
+<ul class="doclist">
+<li><a href="Preface.html#lab12">Recommended Citation Format</a>
+
+</li>
+</ul>
+</div>
+
+</li>
+<li><a href="Preface.html#lab13">Thanks</a>
+
+</li>
+</ul>
+</div>
+<h2><a href="Maps.html">Total and Partial Maps &nbsp;&nbsp; (<i>Maps</i>)</a></h2>
+<div>
+<ul class="doclist">
+<li><a href="Maps.html#lab14">The Coq Standard Library</a>
+
+</li>
+<li><a href="Maps.html#lab15">Identifiers</a>
+
+</li>
+<li><a href="Maps.html#lab16">Total Maps</a>
+
+</li>
+<li><a href="Maps.html#lab23">Partial maps</a>
+
+</li>
+</ul>
+</div>
+<h2><a href="Imp.html">Simple Imperative Programs &nbsp;&nbsp; (<i>Imp</i>)</a></h2>
+<div>
+<ul class="doclist">
+<li><a href="Imp.html#lab24">Arithmetic and Boolean Expressions</a>
+<div>
+<ul class="doclist">
+<li><a href="Imp.html#lab25">Syntax</a>
+
+</li>
+<li><a href="Imp.html#lab26">Evaluation</a>
+
+</li>
+<li><a href="Imp.html#lab27">Optimization</a>
+
+</li>
+</ul>
+</div>
+
+</li>
+<li><a href="Imp.html#lab28">Coq Automation</a>
+<div>
+<ul class="doclist">
+<li><a href="Imp.html#lab29">Tacticals</a>
+
+</li>
+<li><a href="Imp.html#lab36">Defining New Tactics</a>
+
+</li>
+<li><a href="Imp.html#lab37">The <span class="inlinecode"><span class="id" title="var">lia</span></span> Tactic</a>
+
+</li>
+<li><a href="Imp.html#lab38">A Few More Handy Tactics</a>
+
+</li>
+</ul>
+</div>
+
+</li>
+<li><a href="Imp.html#lab39">Evaluation as a Relation</a>
+<div>
+<ul class="doclist">
+<li><a href="Imp.html#lab40">Inference Rule Notation</a>
+
+</li>
+<li><a href="Imp.html#lab42">Equivalence of the Definitions</a>
+
+</li>
+<li><a href="Imp.html#lab44">Computational vs. Relational Definitions</a>
+
+</li>
+</ul>
+</div>
+
+</li>
+<li><a href="Imp.html#lab45">Expressions With Variables</a>
+<div>
+<ul class="doclist">
+<li><a href="Imp.html#lab46">States</a>
+
+</li>
+<li><a href="Imp.html#lab47">Syntax</a>
+
+</li>
+<li><a href="Imp.html#lab48">Notations</a>
+
+</li>
+<li><a href="Imp.html#lab49">Evaluation</a>
+
+</li>
+</ul>
+</div>
+
+</li>
+<li><a href="Imp.html#lab50">Commands</a>
+<div>
+<ul class="doclist">
+<li><a href="Imp.html#lab51">Syntax</a>
+
+</li>
+<li><a href="Imp.html#lab52">Desugaring Notations</a>
+
+</li>
+<li><a href="Imp.html#lab53"><span class="inlinecode"><span class="id" title="keyword">Locate</span></span> Again</a>
+
+</li>
+<li><a href="Imp.html#lab56">More Examples</a>
+
+</li>
+</ul>
+</div>
+
+</li>
+<li><a href="Imp.html#lab60">Evaluating Commands</a>
+<div>
+<ul class="doclist">
+<li><a href="Imp.html#lab61">Evaluation as a Function (Failed Attempt)</a>
+
+</li>
+<li><a href="Imp.html#lab62">Evaluation as a Relation</a>
+
+</li>
+<li><a href="Imp.html#lab66">Determinism of Evaluation</a>
+
+</li>
+</ul>
+</div>
+
+</li>
+<li><a href="Imp.html#lab67">Reasoning About Imp Programs</a>
+
+</li>
+<li><a href="Imp.html#lab72">Additional Exercises</a>
+
+</li>
+</ul>
+</div>
+<h2><a href="ImpShort.html">ImpShort</a></h2>
+<div>
+<ul class="doclist">
+<li><div>
+<ul class="doclist">
+<li><a href="ImpShort.html#lab81">Imp: Imperative Programs</a>
+
+</li>
+<li><a href="ImpShort.html#lab82">Imp Syntax</a>
+
+</li>
+<li><a href="ImpShort.html#lab83">Example: Factorial</a>
+
+</li>
+<li><a href="ImpShort.html#lab84">OPTIMIZATION / REASONING DEMO</a>
+
+</li>
+<li><a href="ImpShort.html#lab85">Imp Memory</a>
+
+</li>
+<li><a href="ImpShort.html#lab86">Semantics</a>
+
+</li>
+<li><a href="ImpShort.html#lab88">Evaluation as a Function (Failed Attempt)</a>
+
+</li>
+</ul>
+</div>
+
+</li>
+</ul>
+</div>
+<h2><a href="Hoare.html">Hoare Logic, Part I &nbsp;&nbsp; (<i>Hoare</i>)</a></h2>
+<div>
+<ul class="doclist">
+<li><a href="Hoare.html#lab92">Assertions</a>
+<div>
+<ul class="doclist">
+<li><a href="Hoare.html#lab94">Notations for Assertions</a>
+
+</li>
+</ul>
+</div>
+
+</li>
+<li><a href="Hoare.html#lab95">Hoare Triples, Informally</a>
+
+</li>
+<li><a href="Hoare.html#lab98">Hoare Triples, Formally</a>
+
+</li>
+<li><a href="Hoare.html#lab101">Proof Rules</a>
+<div>
+<ul class="doclist">
+<li><a href="Hoare.html#lab102">Skip</a>
+
+</li>
+<li><a href="Hoare.html#lab103">Sequencing</a>
+
+</li>
+<li><a href="Hoare.html#lab104">Assignment</a>
+
+</li>
+<li><a href="Hoare.html#lab110">Consequence</a>
+
+</li>
+<li><a href="Hoare.html#lab111">Automation</a>
+
+</li>
+<li><a href="Hoare.html#lab113">Sequencing + Assignment</a>
+
+</li>
+<li><a href="Hoare.html#lab117">Conditionals</a>
+
+</li>
+<li><a href="Hoare.html#lab124">While Loops</a>
+
+</li>
+</ul>
+</div>
+
+</li>
+<li><a href="Hoare.html#lab127">Summary</a>
+
+</li>
+<li><a href="Hoare.html#lab128">Additional Exercises</a>
+<div>
+<ul class="doclist">
+<li><a href="Hoare.html#lab129">Havoc</a>
+
+</li>
+<li><a href="Hoare.html#lab132">Assert and Assume</a>
+
+</li>
+</ul>
+</div>
+
+</li>
+</ul>
+</div>
+<h2><a href="Introduction.html">Introduction</a></h2>
+<div>
+<ul class="doclist">
+<li><div>
+<ul class="doclist">
+<li><a href="Introduction.html#lab134">Motivation: Reasoning about Program Behaviors</a>
+
+</li>
+</ul>
+</div>
+
+</li>
+</ul>
+</div>
+<h2><a href="Monads.html">Monads</a></h2>
+<div>
+<ul class="doclist">
+<li><div>
+<ul class="doclist">
+<li><a href="Monads.html#lab135">Introduction to Monads</a>
+
+</li>
+<li><a href="Monads.html#lab136">Modeling Imperative Programs</a>
+
+</li>
+<li><a href="Monads.html#lab137">Simple States</a>
+
+</li>
+<li><a href="Monads.html#lab142">More state operations</a>
+
+</li>
+<li><a href="Monads.html#lab143">Generalizing from <span class="inlinecode"><span class="id" title="var">nat</span></span> to arbitrary states</a>
+
+</li>
+<li><a href="Monads.html#lab145">Options as a monad.</a>
+
+</li>
+<li><a href="Monads.html#lab148">Monads, generally</a>
+
+</li>
+<li><a href="Monads.html#lab150">Monad Instances</a>
+
+</li>
+<li><a href="Monads.html#lab155">Monad Laws</a>
+
+</li>
+<li><a href="Monads.html#lab159">Properness: a logical relation</a>
+
+</li>
+<li><a href="Monads.html#lab166">Deep vs. Shallow Embeddings</a>
+
+</li>
+</ul>
+</div>
+
+</li>
+</ul>
+</div>
+<h2><a href="Free.html">Free</a></h2>
+<div>
+<ul class="doclist">
+<li><div>
+<ul class="doclist">
+<li><a href="Free.html#lab167">Extensible Semantics and the <span class="inlinecode"><span class="id" title="var">Free</span></span> Monad</a>
+
+</li>
+<li><a href="Free.html#lab172">Free Monads</a>
+
+</li>
+<li><a href="Free.html#lab183">Next: <span class="inlinecode"><span class="id" title="var">ITrees</span></span></a>
+
+</li>
+</ul>
+</div>
+
+</li>
+</ul>
+</div>
+<h2><a href="ITrees.html">ITrees</a></h2>
+<div>
+<ul class="doclist">
+<li><div>
+<ul class="doclist">
+<li><a href="ITrees.html#lab194">Iteration</a>
+
+</li>
+</ul>
+</div>
+
+</li>
+</ul>
+</div>
+<h2><a href="ITreesEquiv.html">ITreesEquiv</a></h2>
+<div>
+<ul class="doclist">
+<li><div>
+<ul class="doclist">
+<li><a href="ITreesEquiv.html#lab198"><span class="inlinecode"><span class="id" title="var">itree</span></span> <span class="inlinecode"><span class="id" title="var">E</span></span> as a Monad</a>
+
+</li>
+<li><a href="ITreesEquiv.html#lab203">Relational Equivalence</a>
+
+</li>
+</ul>
+</div>
+
+</li>
+</ul>
+</div>
+<h2><a href="ImpDenotation.html">ImpDenotation</a></h2>
+<div>
+<ul class="doclist">
+<li><div>
+<ul class="doclist">
+<li><a href="ImpDenotation.html#lab204">Imp Semantics, Denotationally</a>
+
+</li>
+</ul>
+</div>
+
+</li>
+</ul>
+</div>
+<h2><a href="ImpEquiv.html">ImpEquiv</a></h2>
+<div>
+<ul class="doclist">
+<li><div>
+<ul class="doclist">
+<li><a href="ImpEquiv.html#lab215">Equivalence of Imp programs</a>
+
+</li>
+<li><a href="ImpEquiv.html#lab217">Elementary properties of program equivalences</a>
+
+</li>
+<li><a href="ImpEquiv.html#lab218">Syntactic contexts</a>
+
+</li>
+<li><a href="ImpEquiv.html#lab220">Semantically Characterizing Evaluation</a>
+
+</li>
+<li><a href="ImpEquiv.html#lab221">Universally valid static rewrite rules: an inventory</a>
+
+</li>
+<li><a href="ImpEquiv.html#lab226">Semantic validity of our calculus</a>
+
+</li>
+<li><a href="ImpEquiv.html#lab229">A sound static calculus</a>
+
+</li>
+<li><a href="ImpEquiv.html#lab230">Soundly lifting the calculus</a>
+
+</li>
+<li><a href="ImpEquiv.html#lab231">Proving program equivalences</a>
+
+</li>
+<li><a href="ImpEquiv.html#lab232">Constant folding as a tactic</a>
+
+</li>
+<li><a href="ImpEquiv.html#lab235">Constant folding as a sound optimization</a>
+
+</li>
+</ul>
+</div>
+
+</li>
+<li><a href="ImpEquiv.html#lab238">State algebra</a>
+<div>
+<ul class="doclist">
+<li><a href="ImpEquiv.html#lab239">Algebraic laws over concrete manipulations of the memory</a>
+
+</li>
+<li><a href="ImpEquiv.html#lab240">Algebraic laws over monadic computations</a>
+
+</li>
+</ul>
+</div>
+
+</li>
+</ul>
+</div>
+<h2><a href="Hoare3.html">Hoare3</a></h2>
+<div>
+<ul class="doclist">
+<li><div>
+<ul class="doclist">
+<li><a href="Hoare3.html#lab249">Substitution</a>
+
+</li>
+</ul>
+</div>
+
+</li>
+</ul>
+</div>
+<h2><a href="Further.html">Further</a></h2>
+<h2><a href="Utils.html">Utils</a></h2>
+</div>
+
+</div>
+
+</div>
+
+</div>
+</body>
+</html>

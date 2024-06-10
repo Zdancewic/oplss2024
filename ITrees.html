@@ -1,0 +1,543 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="common/css/sf.css" rel="stylesheet" type="text/css" />
+<title>ITrees</title>
+<link href="common/jquery-ui/jquery-ui.css" rel="stylesheet">
+<script src="common/jquery-ui/external/jquery/jquery.js"></script>
+<script src="common/jquery-ui/jquery-ui.js"></script>
+<script src="common/toggleproofs.js"></script>
+<link href="common/css/rip.css" rel="stylesheet" type="text/css"/>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+<div id='logoinheader'><a href='https://softwarefoundations.cis.upenn.edu'>
+<img src='common/media/image/sf_logo_sm.png' alt='Software Foundations Logo'></a></div>
+<div class='booktitleinheader'><a href='index.html'>Volume 7: Reasoning about Interactive Programs</a></div>
+<ul id='menu'>
+   <li class='section_name'><a href='toc.html'>Table of Contents</a></li>
+   <li class='section_name'><a href='coqindex.html'>Index</a></li>
+</ul>
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">ITrees</h1>
+
+
+<div class="doc">
+<a id="lab184"></a><h3 class="section">Note</h3>
+ NOTE This file recapitulates definitions that are given in the <span class="inlinecode"><span class="id" title="var">coq</span>-<span class="id" title="var">itree</span></span>
+library. If you want to prove things about itrees use <span class="inlinecode"><span class="id" title="keyword">Import</span></span> <span class="inlinecode"><span class="id" title="var">ITree</span></span> instad. 
+<div class="paragraph"> </div>
+
+<a id="lab185"></a><h3 class="section">Introduction</h3>
+
+<div class="paragraph"> </div>
+
+ We define in this section the type of *interaction trees*.  Elements of
+this type will intuitively each model a computation.  The computations we
+consider are dubbed as potentially *interactive*: they may, during their
+execution, trigger certain *events*, requesting the environment to process such
+events, and return a value in exchange.  Our data-type of interaction trees is
+hence parameterized by two pieces of data: 
+<div class="paragraph"> </div>
+
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> the set <span class="inlinecode"><span class="id" title="var">E</span></span> of events that the computation may perform the type <span class="inlinecode"><span class="id" title="var">R</span></span> of
+
+</li>
+<li> values that the computation may return
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+  Events are a *family of types*, a parameter of type <span class="inlinecode"><span class="id" title="keyword">Type</span></span> <span class="inlinecode">→</span> <span class="inlinecode"><span class="id" title="keyword">Type</span></span>.  The reason
+  for this slightly complexe type is that each event will specify the kind of
+  answer it expects from the environment.  An event <span class="inlinecode"><span class="id" title="var">e</span></span> may therefore for
+  instance be of type <span class="inlinecode"><span class="id" title="var">E</span></span> <span class="inlinecode"><span class="id" title="var">nat</span></span> if it expects the environment to answer it with a
+  <span class="inlinecode"><span class="id" title="var">nat</span></span>.
+
+<div class="paragraph"> </div>
+
+  As an early intuition, imagine that you want to model a computation with
+  Input/Output interaction, i.e. that may print integers in your terminal, and
+  may stop and request from the user to input an integer.  You would hence use a
+  domain of interaction <span class="inlinecode"><span class="id" title="var">E</span></span> that would contain: - an <span class="inlinecode"><span class="id" title="var">Ouput</span></span> <span class="inlinecode"><span class="id" title="var">n</span></span> event that would
+  take a <span class="inlinecode"><span class="id" title="var">nat</span></span> as argument. Since we don't expect any particular answer in
+  exchange, a simple acknowledgement that the effect has been performed will do:
+  it will be of type <span class="inlinecode"><span class="id" title="var">E</span></span> <span class="inlinecode"><span class="id" title="var">unit</span></span> - an <span class="inlinecode"><span class="id" title="var">Input</span></span> event. This time, we are waiting for
+  a meaningful answer, this event would have type <span class="inlinecode"><span class="id" title="var">E</span></span> <span class="inlinecode"><span class="id" title="var">nat</span></span>.
+
+<div class="paragraph"> </div>
+
+<a id="lab186"></a><h3 class="section">The <span class="inlinecode"><span class="id" title="var">Free</span></span> monad:</h3>
+
+<div class="paragraph"> </div>
+
+ Recall the definition of <span class="inlinecode"><span class="id" title="var">FFree</span></span>:
+<br/>
+<span class="inlinecode"><span class="id" title="keyword">Inductive</span> <span class="id" title="var">FFree</span> (<span class="id" title="var">E</span> : <span class="id" title="keyword">Type</span> → <span class="id" title="keyword">Type</span>) (<span class="id" title="var">R</span> : <span class="id" title="keyword">Type</span>) : <span class="id" title="keyword">Type</span> :=<br/>
+| <span class="id" title="var">Ret</span> (<span class="id" title="var">x</span> : <span class="id" title="var">R</span>)<br/>
+| <span class="id" title="var">Do</span> {<span class="id" title="var">X</span>} (<span class="id" title="var">op</span> : <span class="id" title="var">E</span> <span class="id" title="var">X</span>) (<span class="id" title="var">k</span> : <span class="id" title="var">X</span> → <span class="id" title="var">FFree</span> <span class="id" title="var">E</span> <span class="id" title="var">R</span>).
+</span> 
+</div>
+
+<div class="doc">
+<a id="lab187"></a><h3 class="section">A Coinductive Version of FFree</h3>
+
+</div>
+<div class="code">
+
+&nbsp;&nbsp;<span class="id" title="keyword">CoInductive</span> <a id="ITreeAlternative.itree" class="idref" href="#ITreeAlternative.itree"><span class="id" title="inductive">itree</span></a> (<a id="E:7" class="idref" href="#E:7"><span class="id" title="binder">E</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>) (<a id="R:8" class="idref" href="#R:8"><span class="id" title="binder">R</span></a> : <span class="id" title="keyword">Type</span>) :=<br/>
+&nbsp;&nbsp;| <a id="ITreeAlternative.Ret" class="idref" href="#ITreeAlternative.Ret"><span class="id" title="constructor">Ret</span></a> (<a id="r:11" class="idref" href="#r:11"><span class="id" title="binder">r</span></a>:<a class="idref" href="ITrees.html#R:8"><span class="id" title="variable">R</span></a>)<br/>
+&nbsp;&nbsp;| <a id="ITreeAlternative.Tau" class="idref" href="#ITreeAlternative.Tau"><span class="id" title="constructor">Tau</span></a> (<a id="t:12" class="idref" href="#t:12"><span class="id" title="binder">t</span></a> : <a class="idref" href="ITrees.html#itree:9"><span class="id" title="inductive">itree</span></a> <a class="idref" href="ITrees.html#E:7"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#R:8"><span class="id" title="variable">R</span></a>)<br/>
+&nbsp;&nbsp;| <a id="ITreeAlternative.Vis" class="idref" href="#ITreeAlternative.Vis"><span class="id" title="constructor">Vis</span></a>  {<a id="X:13" class="idref" href="#X:13"><span class="id" title="binder">X</span></a>:<span class="id" title="keyword">Type</span>} (<a id="e:14" class="idref" href="#e:14"><span class="id" title="binder">e</span></a>: <a class="idref" href="ITrees.html#E:7"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#X:13"><span class="id" title="variable">X</span></a>) (<a id="k:15" class="idref" href="#k:15"><span class="id" title="binder">k</span></a> : <a class="idref" href="ITrees.html#X:13"><span class="id" title="variable">X</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="ITrees.html#itree:9"><span class="id" title="inductive">itree</span></a> <a class="idref" href="ITrees.html#E:7"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#R:8"><span class="id" title="variable">R</span></a>).<br/>
+</div>
+
+<div class="doc">
+Represents computations that can:
+<ul class="doclist">
+<li> Terminate by returning a value of type <span class="inlinecode"><span class="id" title="var">R</span></span>
+
+</li>
+<li> Perform an internal step of computation, before continuing to compute
+
+</li>
+<li> <i>Trigger</i> an event <span class="inlinecode"><span class="id" title="var">e</span></span> expecting a certain answer of type <span class="inlinecode"><span class="id" title="var">X</span></span>. It then continues to compute, but must
+    be ready to do so no matter what is the environment's answer: it therefore takes
+    a continuation indexed by <span class="inlinecode"><span class="id" title="var">X</span></span>
+
+</li>
+</ul>
+
+</div>
+<div class="code">
+<hr class='doublespaceincode'/>
+
+<br/><hr class='doublespaceincode'/>
+
+<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Definition</span> <a id="observe" class="idref" href="#observe"><span class="id" title="definition">observe</span></a> {<a id="E:28" class="idref" href="#E:28"><span class="id" title="binder">E</span></a> <a id="R:29" class="idref" href="#R:29"><span class="id" title="binder">R</span></a>} (<a id="t:30" class="idref" href="#t:30"><span class="id" title="binder">t</span></a> : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:28"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#R:29"><span class="id" title="variable">R</span></a>) : <a class="idref" href="ITrees.html#itreeF"><span class="id" title="inductive">itreeF</span></a> <a class="idref" href="ITrees.html#E:28"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#R:29"><span class="id" title="variable">R</span></a> (<a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:28"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#R:29"><span class="id" title="variable">R</span></a>) := @<a class="idref" href="ITrees.html#_observe"><span class="id" title="projection">_observe</span></a> <a class="idref" href="ITrees.html#E:28"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#R:29"><span class="id" title="variable">R</span></a> <a class="idref" href="ITrees.html#t:30"><span class="id" title="variable">t</span></a>.<br/><hr class='doublespaceincode'/>
+
+<br/>
+<span class="id" title="keyword">Notation</span> <a id="itree'" class="idref" href="#itree'"><span class="id" title="abbreviation">itree'</span></a> <span class="id" title="var">E</span> <span class="id" title="var">R</span> := (@<a class="idref" href="ITrees.html#itreeF"><span class="id" title="inductive">itreeF</span></a> <span class="id" title="var">E</span> <span class="id" title="var">R</span> (<a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <span class="id" title="var">E</span> <span class="id" title="var">R</span>)).<br/>
+<span class="id" title="keyword">Notation</span> <a id="Ret" class="idref" href="#Ret"><span class="id" title="abbreviation">Ret</span></a> <span class="id" title="var">x</span> := (<a class="idref" href="ITrees.html#go"><span class="id" title="constructor">go</span></a> (<a class="idref" href="ITrees.html#RetF"><span class="id" title="constructor">RetF</span></a> <span class="id" title="var">x</span>)).<br/>
+<span class="id" title="keyword">Notation</span> <a id="Tau" class="idref" href="#Tau"><span class="id" title="abbreviation">Tau</span></a> <span class="id" title="var">t</span> := (<a class="idref" href="ITrees.html#go"><span class="id" title="constructor">go</span></a> (<a class="idref" href="ITrees.html#TauF"><span class="id" title="constructor">TauF</span></a> <span class="id" title="var">t</span>)).<br/>
+<span class="id" title="keyword">Notation</span> <a id="Vis" class="idref" href="#Vis"><span class="id" title="abbreviation">Vis</span></a> <span class="id" title="var">e</span> <span class="id" title="var">k</span> := (<a class="idref" href="ITrees.html#go"><span class="id" title="constructor">go</span></a> (<a class="idref" href="ITrees.html#VisF"><span class="id" title="constructor">VisF</span></a> <span class="id" title="var">e</span> <span class="id" title="var">k</span>)).<br/><hr class='doublespaceincode'/>
+</div>
+
+<div class="doc">
+<a id="lab189"></a><h3 class="section">First examples of <span class="inlinecode"><span class="id" title="var">itree</span></span> computations</h3>
+
+</div>
+
+<div class="doc">
+ We don't have much facilities yet to define our computations,
+     but we can already program a few clumsy examples. 
+<div class="paragraph"> </div>
+
+ We first define the Input/Output events informally described above 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Variant</span> <a id="IOE" class="idref" href="#IOE"><span class="id" title="inductive">IOE</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="Output" class="idref" href="#Output"><span class="id" title="constructor">Output</span></a> (<a id="n:33" class="idref" href="#n:33"><span class="id" title="binder">n</span></a> : <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) : <a class="idref" href="ITrees.html#IOE:31"><span class="id" title="inductive">IOE</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="Input" class="idref" href="#Input"><span class="id" title="constructor">Input</span></a>            : <a class="idref" href="ITrees.html#IOE:31"><span class="id" title="inductive">IOE</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>.<br/>
+</div>
+
+<div class="doc">
+Here is a very boring computation that simply returns 1789 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="aux_armes" class="idref" href="#aux_armes"><span class="id" title="definition">aux_armes</span></a> : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#IOE"><span class="id" title="inductive">IOE</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> := <a class="idref" href="ITrees.html#Ret"><span class="id" title="abbreviation">Ret</span></a> 1789.<br/>
+</div>
+
+<div class="doc">
+And one that requests a value from the user and doubles it 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="double" class="idref" href="#double"><span class="id" title="definition">double</span></a> : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#IOE"><span class="id" title="inductive">IOE</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="ITrees.html#Vis"><span class="id" title="abbreviation">Vis</span></a> <a class="idref" href="ITrees.html#Input"><span class="id" title="constructor">Input</span></a> (<span class="id" title="keyword">fun</span> <a id="n:34" class="idref" href="#n:34"><span class="id" title="binder">n</span></a> ⇒ <a class="idref" href="ITrees.html#Ret"><span class="id" title="abbreviation">Ret</span></a> (2 <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Peano.html#ea2ff3d561159081cea6fb2e8113cc<sub>54</sub>"><span class="id" title="notation">×</span></a> <a class="idref" href="ITrees.html#n:34"><span class="id" title="variable">n</span></a>)).<br/>
+</div>
+
+<div class="doc">
+Of course, we can reap the benefits of coinductives: our computations
+    do not need to terminate! Here is a computation that repeatedly asks for integers before
+    printing them back
+   
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">CoFixpoint</span> <a id="echo" class="idref" href="#echo"><span class="id" title="definition">echo</span></a> : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#IOE"><span class="id" title="inductive">IOE</span></a> <a class="idref" href="Utils.html#void"><span class="id" title="inductive">void</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="ITrees.html#Vis"><span class="id" title="abbreviation">Vis</span></a> <a class="idref" href="ITrees.html#Input"><span class="id" title="constructor">Input</span></a> (<span class="id" title="keyword">fun</span> <a id="n:36" class="idref" href="#n:36"><span class="id" title="binder">n</span></a> ⇒ <a class="idref" href="ITrees.html#Vis"><span class="id" title="abbreviation">Vis</span></a> (<a class="idref" href="ITrees.html#Output"><span class="id" title="constructor">Output</span></a> <a class="idref" href="ITrees.html#n:36"><span class="id" title="variable">n</span></a>) (<span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="ITrees.html#echo:35"><span class="id" title="definition">echo</span></a>)).<br/>
+</div>
+
+<div class="doc">
+<a id="lab190"></a><h3 class="section">Silent Divergence</h3>
+
+<div class="paragraph"> </div>
+
+ And finally, an important: the silently diverging computation 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">CoFixpoint</span> <a id="spin_spec" class="idref" href="#spin_spec"><span class="id" title="definition">spin_spec</span></a> : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#IOE"><span class="id" title="inductive">IOE</span></a> <a class="idref" href="Utils.html#void"><span class="id" title="inductive">void</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="ITrees.html#Tau"><span class="id" title="abbreviation">Tau</span></a> <a class="idref" href="ITrees.html#spin_spec:37"><span class="id" title="definition">spin_spec</span></a>.<br/>
+</div>
+
+<div class="doc">
+     We have typed these last two computations with the empty type
+     <span class="inlinecode"><span class="id" title="var">void</span></span> as return type.
+     What do you think of the set of computations of type <span class="inlinecode"><span class="id" title="var">itree</span></span> <span class="inlinecode"><span class="id" title="var">IOE</span></span> <span class="inlinecode"><span class="id" title="var">void</span></span>?
+     Note that <span class="inlinecode"><span class="id" title="var">echo</span></span> and <span class="inlinecode"><span class="id" title="var">spin</span></span> can actually be defined at arbitrary return types.
+   
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">CoFixpoint</span> <a id="spin" class="idref" href="#spin"><span class="id" title="definition">spin</span></a> {<a id="E:38" class="idref" href="#E:38"><span class="id" title="binder">E</span></a> <a id="R:39" class="idref" href="#R:39"><span class="id" title="binder">R</span></a>} : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:38"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#R:39"><span class="id" title="variable">R</span></a> := <a class="idref" href="ITrees.html#Tau"><span class="id" title="abbreviation">Tau</span></a> <a class="idref" href="ITrees.html#spin:40"><span class="id" title="definition">spin</span></a>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab191"></a><h3 class="section">Failure</h3>
+ Consider now an event whose return type is empty 
+</div>
+<div class="code">
+
+&nbsp;&nbsp;<span class="id" title="keyword">Variant</span> <a id="Empty" class="idref" href="#Empty"><span class="id" title="inductive">Empty</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;| <a id="empty" class="idref" href="#empty"><span class="id" title="constructor">empty</span></a> : <a class="idref" href="ITrees.html#Empty:41"><span class="id" title="inductive">Empty</span></a> <a class="idref" href="Utils.html#void"><span class="id" title="inductive">void</span></a>.<br/>
+</div>
+
+<div class="doc">
+This event corresponds to requesting an impossible task from the
+    environment, and can be used to model failure.
+    In particular, it can be cast at any return type, so that we can
+    sneak in failure in lieu of any computation!
+   
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="fail" class="idref" href="#fail"><span class="id" title="definition">fail</span></a> {<a id="R:43" class="idref" href="#R:43"><span class="id" title="binder">R</span></a>} : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#Empty"><span class="id" title="inductive">Empty</span></a> <a class="idref" href="ITrees.html#R:43"><span class="id" title="variable">R</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="ITrees.html#Vis"><span class="id" title="abbreviation">Vis</span></a> <a class="idref" href="ITrees.html#empty"><span class="id" title="constructor">empty</span></a> (<span class="id" title="keyword">fun</span> <a id="x:44" class="idref" href="#x:44"><span class="id" title="binder">x</span></a> : <a class="idref" href="Utils.html#void"><span class="id" title="inductive">void</span></a> ⇒ <span class="id" title="keyword">match</span> <a class="idref" href="ITrees.html#x:44"><span class="id" title="variable">x</span></a> <span class="id" title="keyword">with</span> <span class="id" title="keyword">end</span>).<br/><hr class='doublespaceincode'/>
+&nbsp;&nbsp;
+<br/>
+</div>
+
+<div class="doc">
+If we are to write ambitious computations, we would like to
+   have a little bit of support to help us code in this strange
+   programming language that itrees make.
+   First, we are going to define facilities for *sequencing*
+   computations: for any fixed domain of events <span class="inlinecode"><span class="id" title="var">E</span></span>, the type
+   of computations <span class="inlinecode"><span class="id" title="var">itree</span></span> <span class="inlinecode"><span class="id" title="var">E</span></span> is a *monad*, and hence support
+   a <span class="inlinecode"><span class="id" title="var">bind</span></span> operation.
+
+<div class="paragraph"> </div>
+
+ The definition is intuitively quite straightforward:
+   we traverse the first tree, and when we reach a leaf,
+   we feed the value we find to the continuation and attach
+   the resulting leaf.
+
+<div class="paragraph"> </div>
+
+   We are going to allow ourself one slight subtlety: we can
+   notice that the continuation argument remains untouched in
+   the co-recursive calls we are planning to make.
+   We make this fact more apparent by switching the order of
+   the arguments so that it does not even need to be an argument
+   of the <span class="inlinecode"><span class="id" title="keyword">cofix</span></span>.
+   For this particular definition it would not be important
+   (try yourself!), but it will help soothe the guard condition
+   when we will write other <span class="inlinecode"><span class="id" title="keyword">cofix</span></span> whose body use <span class="inlinecode"><span class="id" title="var">bind</span></span> themselves.
+<a id="lab192"></a><h3 class="section">Substitution:</h3>
+
+<div class="paragraph"> </div>
+
+ As with the <span class="inlinecode"><span class="id" title="var">FFree</span></span> monad, we can define a "substitution" operation,
+which looks for all the <span class="inlinecode"><span class="id" title="var">Ret</span></span> <span class="inlinecode"><span class="id" title="var">x</span></span> leaves of the tree and applies a
+continuation <span class="inlinecode"><span class="id" title="var">k</span></span> to build a bigger tree : 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <a id="subst" class="idref" href="#subst"><span class="id" title="definition">subst</span></a> {<a id="E:46" class="idref" href="#E:46"><span class="id" title="binder">E</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>} {<a id="T:47" class="idref" href="#T:47"><span class="id" title="binder">T</span></a> <a id="U:48" class="idref" href="#U:48"><span class="id" title="binder">U</span></a> : <span class="id" title="keyword">Type</span>} (<a id="k:49" class="idref" href="#k:49"><span class="id" title="binder">k</span></a> : <a class="idref" href="ITrees.html#T:47"><span class="id" title="variable">T</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:46"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#U:48"><span class="id" title="variable">U</span></a>)<br/>
+&nbsp;&nbsp;: <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:46"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#T:47"><span class="id" title="variable">T</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:46"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#U:48"><span class="id" title="variable">U</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">cofix</span> <span class="id" title="var">_subst</span> (<a id="u:50" class="idref" href="#u:50"><span class="id" title="binder">u</span></a> : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:46"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#T:47"><span class="id" title="variable">T</span></a>) : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:46"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#U:48"><span class="id" title="variable">U</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="ITrees.html#observe"><span class="id" title="definition">observe</span></a> <a class="idref" href="ITrees.html#u:50"><span class="id" title="variable">u</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="ITrees.html#RetF"><span class="id" title="constructor">RetF</span></a> <span class="id" title="var">r</span> ⇒ <a class="idref" href="ITrees.html#k:49"><span class="id" title="variable">k</span></a> <span class="id" title="var">r</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="ITrees.html#TauF"><span class="id" title="constructor">TauF</span></a> <span class="id" title="var">t</span> ⇒ <a class="idref" href="ITrees.html#Tau"><span class="id" title="abbreviation">Tau</span></a> (<a class="idref" href="ITrees.html#_subst:51"><span class="id" title="variable">_subst</span></a> <span class="id" title="var">t</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="ITrees.html#VisF"><span class="id" title="constructor">VisF</span></a> <span class="id" title="var">e</span> <span class="id" title="var">h</span> ⇒ <a class="idref" href="ITrees.html#Vis"><span class="id" title="abbreviation">Vis</span></a> <span class="id" title="var">e</span> (<span class="id" title="keyword">fun</span> <a id="x:52" class="idref" href="#x:52"><span class="id" title="binder">x</span></a> ⇒ <a class="idref" href="ITrees.html#_subst:51"><span class="id" title="variable">_subst</span></a> (<span class="id" title="var">h</span> <a class="idref" href="ITrees.html#x:52"><span class="id" title="variable">x</span></a>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab193"></a><h3 class="section">Monad operations</h3>
+
+<div class="paragraph"> </div>
+
+ These ingredients give us all we need to define a monad. 
+<div class="paragraph"> </div>
+
+ Return is just <span class="inlinecode"><span class="id" title="var">Ret</span></span>  
+<div class="paragraph"> </div>
+
+ Bind is just <span class="inlinecode"><span class="id" title="tactic">subst</span></span> with the arguments reordered: 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="bind" class="idref" href="#bind"><span class="id" title="definition">bind</span></a> {<a id="E:53" class="idref" href="#E:53"><span class="id" title="binder">E</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>} {<a id="T:54" class="idref" href="#T:54"><span class="id" title="binder">T</span></a> <a id="U:55" class="idref" href="#U:55"><span class="id" title="binder">U</span></a> : <span class="id" title="keyword">Type</span>} (<a id="u:56" class="idref" href="#u:56"><span class="id" title="binder">u</span></a> : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:53"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#T:54"><span class="id" title="variable">T</span></a>) (<a id="k:57" class="idref" href="#k:57"><span class="id" title="binder">k</span></a> : <a class="idref" href="ITrees.html#T:54"><span class="id" title="variable">T</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:53"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#U:55"><span class="id" title="variable">U</span></a>)<br/>
+&nbsp;&nbsp;: <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:53"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#U:55"><span class="id" title="variable">U</span></a> := <a class="idref" href="ITrees.html#subst"><span class="id" title="definition">subst</span></a> <a class="idref" href="ITrees.html#k:57"><span class="id" title="variable">k</span></a> <a class="idref" href="ITrees.html#u:56"><span class="id" title="variable">u</span></a>.<br/>
+</div>
+
+<div class="doc">
+An elementary <span class="inlinecode"><span class="id" title="var">itree</span></span> computation emits an event: 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="trigger" class="idref" href="#trigger"><span class="id" title="definition">trigger</span></a> {<a id="E:58" class="idref" href="#E:58"><span class="id" title="binder">E</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>} {<a id="A:59" class="idref" href="#A:59"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span>} (<a id="e:60" class="idref" href="#e:60"><span class="id" title="binder">e</span></a> : <a class="idref" href="ITrees.html#E:58"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#A:59"><span class="id" title="variable">A</span></a>) : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:58"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#A:59"><span class="id" title="variable">A</span></a> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="ITrees.html#Vis"><span class="id" title="abbreviation">Vis</span></a> <a class="idref" href="ITrees.html#e:60"><span class="id" title="variable">e</span></a> (<span class="id" title="keyword">fun</span> <a id="x:61" class="idref" href="#x:61"><span class="id" title="binder">x</span></a> ⇒ <a class="idref" href="ITrees.html#Ret"><span class="id" title="abbreviation">Ret</span></a> <a class="idref" href="ITrees.html#x:61"><span class="id" title="variable">x</span></a>).<br/><hr class='doublespaceincode'/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="MoreExamples" class="idref" href="#MoreExamples"><span class="id" title="section">MoreExamples</span></a>.<br/>
+</div>
+
+<div class="doc">
+A computation quadrupling an input 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="quadruple" class="idref" href="#quadruple"><span class="id" title="definition">quadruple</span></a> : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#IOE"><span class="id" title="inductive">IOE</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="n:65" class="idref" href="#n:65"><span class="id" title="binder">n</span></a> <a class="idref" href="ITrees.html#0959d6531a3c2d5ddb2177e5cf7c15a<sub>8</sub>"><span class="id" title="notation">&lt;-</span></a> <a class="idref" href="ITrees.html#double"><span class="id" title="definition">double</span></a><a class="idref" href="ITrees.html#0959d6531a3c2d5ddb2177e5cf7c15a<sub>8</sub>"><span class="id" title="notation">;;</span></a> <a class="idref" href="ITrees.html#Ret"><span class="id" title="abbreviation">Ret</span></a> (2 <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Peano.html#ea2ff3d561159081cea6fb2e8113cc<sub>54</sub>"><span class="id" title="notation">×</span></a> <a class="idref" href="ITrees.html#n:65"><span class="id" title="variable">n</span></a>).<br/>
+</div>
+
+<div class="doc">
+Question:
+     Define the <span class="inlinecode"><span class="id" title="var">fmap</span></span> function over itrees: it should apply a pure function
+     to the outputs of the computation.
+       <span class="inlinecode"><span class="id" title="var">fmap</span></span> <span class="inlinecode">{<span class="id" title="var">E</span></span> <span class="inlinecode"><span class="id" title="var">A</span></span> <span class="inlinecode"><span class="id" title="var">B</span>}</span> <span class="inlinecode">(<span class="id" title="var">t</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">itree</span></span> <span class="inlinecode"><span class="id" title="var">E</span></span> <span class="inlinecode"><span class="id" title="var">A</span>)</span> <span class="inlinecode">(<span class="id" title="var">f</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">A</span></span> <span class="inlinecode">→</span> <span class="inlinecode"><span class="id" title="var">B</span>)</span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">itree</span></span> <span class="inlinecode"><span class="id" title="var">E</span></span> <span class="inlinecode"><span class="id" title="var">B</span></span>
+  
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="fmap" class="idref" href="#fmap"><span class="id" title="definition">fmap</span></a> {<a id="E:66" class="idref" href="#E:66"><span class="id" title="binder">E</span></a> <a id="A:67" class="idref" href="#A:67"><span class="id" title="binder">A</span></a> <a id="B:68" class="idref" href="#B:68"><span class="id" title="binder">B</span></a>} (<a id="f:69" class="idref" href="#f:69"><span class="id" title="binder">f</span></a> : <a class="idref" href="ITrees.html#A:67"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="ITrees.html#B:68"><span class="id" title="variable">B</span></a>) (<a id="t:70" class="idref" href="#t:70"><span class="id" title="binder">t</span></a> : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:66"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#A:67"><span class="id" title="variable">A</span></a>) : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:66"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#B:68"><span class="id" title="variable">B</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="x:71" class="idref" href="#x:71"><span class="id" title="binder">x</span></a> <a class="idref" href="ITrees.html#0959d6531a3c2d5ddb2177e5cf7c15a<sub>8</sub>"><span class="id" title="notation">&lt;-</span></a> <a class="idref" href="ITrees.html#t:70"><span class="id" title="variable">t</span></a><a class="idref" href="ITrees.html#0959d6531a3c2d5ddb2177e5cf7c15a<sub>8</sub>"><span class="id" title="notation">;;</span></a> <a class="idref" href="ITrees.html#Ret"><span class="id" title="abbreviation">Ret</span></a> (<a class="idref" href="ITrees.html#f:69"><span class="id" title="variable">f</span></a> <a class="idref" href="ITrees.html#x:71"><span class="id" title="variable">x</span></a>).<br/>
+</div>
+
+<div class="doc">
+Question:
+      Use your <span class="inlinecode"><span class="id" title="var">fmap</span></span> to define <span class="inlinecode"><span class="id" title="var">ignore</span></span>, the combinator that
+      simply discards the value computed by an itree.
+  
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="ignore" class="idref" href="#ignore"><span class="id" title="definition">ignore</span></a> {<a id="E:72" class="idref" href="#E:72"><span class="id" title="binder">E</span></a> <a id="A:73" class="idref" href="#A:73"><span class="id" title="binder">A</span></a>} : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:72"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#A:73"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:72"><span class="id" title="variable">E</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="t:74" class="idref" href="#t:74"><span class="id" title="binder">t</span></a> ⇒ <a class="idref" href="ITrees.html#fmap"><span class="id" title="definition">fmap</span></a> (<span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#tt"><span class="id" title="constructor">tt</span></a>) <a class="idref" href="ITrees.html#t:74"><span class="id" title="variable">t</span></a>.<br/>
+</div>
+
+<div class="doc">
+Question:
+      Define <span class="inlinecode"><span class="id" title="var">forever</span></span>, a combinator taking a computation as
+      argument and repeating it infinitely often.
+  
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="forever" class="idref" href="#forever"><span class="id" title="definition">forever</span></a> {<a id="E:75" class="idref" href="#E:75"><span class="id" title="binder">E</span></a> <a id="A:76" class="idref" href="#A:76"><span class="id" title="binder">A</span></a> <a id="B:77" class="idref" href="#B:77"><span class="id" title="binder">B</span></a>} (<a id="t:78" class="idref" href="#t:78"><span class="id" title="binder">t</span></a> : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:75"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#A:76"><span class="id" title="variable">A</span></a>) : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:75"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#B:77"><span class="id" title="variable">B</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">cofix</span> <span class="id" title="var">forever_t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="ITrees.html#t:78"><span class="id" title="variable">t</span></a><a class="idref" href="ITrees.html#b77f1391b27e59dad944ba45bb976d<sub>85</sub>"><span class="id" title="notation">;;</span></a> <a class="idref" href="ITrees.html#Tau"><span class="id" title="abbreviation">Tau</span></a> (<a class="idref" href="ITrees.html#forever_t:79"><span class="id" title="variable">forever_t</span></a>).<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">End</span> <a class="idref" href="ITrees.html#MoreExamples"><span class="id" title="section">MoreExamples</span></a>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab194"></a><h2 class="section">Iteration</h2>
+
+<div class="paragraph"> </div>
+
+ In order to write infinite computations, we write a fixed-point combinator <span class="inlinecode"><span class="id" title="var">iter</span></span>.
+  <span class="inlinecode"><span class="id" title="var">iter</span></span> <span class="inlinecode"><span class="id" title="var">step</span></span> <span class="inlinecode"><span class="id" title="var">init</span></span> runs <span class="inlinecode"><span class="id" title="var">step</span></span> <span class="inlinecode"><span class="id" title="var">init</span></span>, analyses the result and either feeds the new value back
+  to the loop body, or terminates with the result.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="iter" class="idref" href="#iter"><span class="id" title="definition">iter</span></a> {<a id="E:80" class="idref" href="#E:80"><span class="id" title="binder">E</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>} {<a id="R:81" class="idref" href="#R:81"><span class="id" title="binder">R</span></a> <a id="I:82" class="idref" href="#I:82"><span class="id" title="binder">I</span></a>: <span class="id" title="keyword">Type</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="step:83" class="idref" href="#step:83"><span class="id" title="binder">step</span></a> : <a class="idref" href="ITrees.html#I:82"><span class="id" title="variable">I</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:80"><span class="id" title="variable">E</span></a> (<a class="idref" href="ITrees.html#I:82"><span class="id" title="variable">I</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#e03f39daf98516fa530d3f6f5a1b4d<sub>92</sub>"><span class="id" title="notation">+</span></a> <a class="idref" href="ITrees.html#R:81"><span class="id" title="variable">R</span></a>)) : <a class="idref" href="ITrees.html#I:82"><span class="id" title="variable">I</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:80"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#R:81"><span class="id" title="variable">R</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">cofix</span> <span class="id" title="var">iter_</span> <a id="init:84" class="idref" href="#init:84"><span class="id" title="binder">init</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;one&nbsp;step&nbsp;of&nbsp;the&nbsp;loop&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="lr:86" class="idref" href="#lr:86"><span class="id" title="binder">lr</span></a> <a class="idref" href="ITrees.html#0959d6531a3c2d5ddb2177e5cf7c15a<sub>8</sub>"><span class="id" title="notation">&lt;-</span></a> <a class="idref" href="ITrees.html#step:83"><span class="id" title="variable">step</span></a> <a class="idref" href="ITrees.html#init:84"><span class="id" title="variable">init</span></a><a class="idref" href="ITrees.html#0959d6531a3c2d5ddb2177e5cf7c15a<sub>8</sub>"><span class="id" title="notation">;;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="ITrees.html#lr:86"><span class="id" title="variable">lr</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;got&nbsp;updated&nbsp;state&nbsp;=&gt;&nbsp;jump&nbsp;back&nbsp;into&nbsp;loop&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#inl"><span class="id" title="constructor">inl</span></a> <span class="id" title="var">updated</span> ⇒ <a class="idref" href="ITrees.html#Tau"><span class="id" title="abbreviation">Tau</span></a> (<a class="idref" href="ITrees.html#iter_:85"><span class="id" title="variable">iter_</span></a> <span class="id" title="var">updated</span>)<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;got&nbsp;a&nbsp;final&nbsp;result&nbsp;=&gt;&nbsp;terminate&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#inr"><span class="id" title="constructor">inr</span></a> <span class="id" title="var">result</span> ⇒ <a class="idref" href="ITrees.html#Ret"><span class="id" title="abbreviation">Ret</span></a> <span class="id" title="var">result</span>             <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+
+<div class="doc">
+Note: the backwards jump is guarded by <span class="inlinecode"><span class="id" title="var">Tau</span></span> 
+<div class="paragraph"> </div>
+
+<a id="lab195"></a><h3 class="section">Example:</h3>
+
+<div class="paragraph"> </div>
+
+ Define the factorial <span class="inlinecode"><span class="id" title="var">fact</span></span> <span class="inlinecode"><span class="id" title="var">n</span></span> using the <span class="inlinecode"><span class="id" title="var">iter</span></span> combinator. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="fact" class="idref" href="#fact"><span class="id" title="definition">fact</span></a> (<a id="n:88" class="idref" href="#n:88"><span class="id" title="binder">n</span></a> : <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="Utils.html#voidE"><span class="id" title="inductive">voidE</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> :=<br/>
+&nbsp;<a class="idref" href="ITrees.html#iter"><span class="id" title="definition">iter</span></a>  (<span class="id" title="keyword">fun</span> '<a id="pat:91" class="idref" href="#pat:91"><span class="id" title="binder">(</span></a><a id="acc:90" class="idref" href="#acc:90"><span class="id" title="binder"><span id="pat:91" class="id">acc</span></span></a><a id="pat:91" class="idref" href="#pat:91"><span class="id" title="binder">,</span></a><a id="n:89" class="idref" href="#n:89"><span class="id" title="binder"><span id="pat:91" class="id">n</span></span></a><a id="pat:91" class="idref" href="#pat:91"><span class="id" title="binder">)</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="ITrees.html#n:89"><span class="id" title="variable">n</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#O"><span class="id" title="constructor">O</span></a> ⇒ <a class="idref" href="ITrees.html#Ret"><span class="id" title="abbreviation">Ret</span></a> (<a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#inr"><span class="id" title="constructor">inr</span></a> <a class="idref" href="ITrees.html#acc:90"><span class="id" title="variable">acc</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#S"><span class="id" title="constructor">S</span></a> <span class="id" title="var">m</span> ⇒ <a class="idref" href="ITrees.html#Ret"><span class="id" title="abbreviation">Ret</span></a> (<a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#inl"><span class="id" title="constructor">inl</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="ITrees.html#n:89"><span class="id" title="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Peano.html#ea2ff3d561159081cea6fb2e8113cc<sub>54</sub>"><span class="id" title="notation">×</span></a> <a class="idref" href="ITrees.html#acc:90"><span class="id" title="variable">acc</span></a><a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">m</span><a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>)<br/>
+<span class="id" title="keyword">end</span>) <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a>1<a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a><a class="idref" href="ITrees.html#n:88"><span class="id" title="variable">n</span></a><a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab196"></a><h3 class="section">"Running" an itrees computation</h3>
+
+<div class="paragraph"> </div>
+
+ As we have seen, we cannot "run" our cofix-points directly inside of Coq.
+  We could however extract them to OCaml to obtain potentially diverging computations.
+  Alternatively, we can use some fuel to force their finite unfolding.
+  But, we can provide "fuel" that can be burned to force it: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Fixpoint</span> <a id="burn" class="idref" href="#burn"><span class="id" title="definition">burn</span></a> (<a id="n:93" class="idref" href="#n:93"><span class="id" title="binder">n</span></a> : <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) {<a id="E:94" class="idref" href="#E:94"><span class="id" title="binder">E</span></a> <a id="R:95" class="idref" href="#R:95"><span class="id" title="binder">R</span></a>} (<a id="t:96" class="idref" href="#t:96"><span class="id" title="binder">t</span></a> : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:94"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#R:95"><span class="id" title="variable">R</span></a>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="ITrees.html#n:93"><span class="id" title="variable">n</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#O"><span class="id" title="constructor">O</span></a> ⇒ <a class="idref" href="ITrees.html#t:96"><span class="id" title="variable">t</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#S"><span class="id" title="constructor">S</span></a> <span class="id" title="var">n</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="ITrees.html#observe"><span class="id" title="definition">observe</span></a> <a class="idref" href="ITrees.html#t:96"><span class="id" title="variable">t</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="ITrees.html#RetF"><span class="id" title="constructor">RetF</span></a> <span class="id" title="var">r</span> ⇒ <a class="idref" href="ITrees.html#Ret"><span class="id" title="abbreviation">Ret</span></a> <span class="id" title="var">r</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="ITrees.html#VisF"><span class="id" title="constructor">VisF</span></a> <span class="id" title="var">e</span> <span class="id" title="var">k</span> ⇒ <a class="idref" href="ITrees.html#Vis"><span class="id" title="abbreviation">Vis</span></a> <span class="id" title="var">e</span> <span class="id" title="var">k</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="ITrees.html#TauF"><span class="id" title="constructor">TauF</span></a> <span class="id" title="var">t'</span> ⇒ <a class="idref" href="ITrees.html#burn:97"><span class="id" title="definition">burn</span></a> <a class="idref" href="ITrees.html#n:93"><span class="id" title="variable">n</span></a> <span class="id" title="var">t'</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+
+<div class="doc">
+You can test that your factorial computes what it should: 
+</div>
+<div class="code">
+<span class="id" title="keyword">Eval</span> <span class="id" title="tactic">compute</span> <span class="id" title="keyword">in</span> <a class="idref" href="ITrees.html#burn"><span class="id" title="definition">burn</span></a> 10 (<a class="idref" href="ITrees.html#fact"><span class="id" title="definition">fact</span></a> 6).<br/>
+</div>
+
+<div class="doc">
+==&gt; <span class="inlinecode"><span class="id" title="var">Ret</span></span> <span class="inlinecode">720</span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">itree</span></span> <span class="inlinecode"><span class="id" title="var">voidE</span></span> <span class="inlinecode"><span class="id" title="var">nat</span></span> 
+<div class="paragraph"> </div>
+
+  Imperative loops are particular patterns of iteration: they do not
+carry any accumulator.  We can capture this pattern with a <span class="inlinecode"><span class="id" title="tactic">repeat</span></span>
+combinator.  
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <a id="repeat" class="idref" href="#repeat"><span class="id" title="definition">repeat</span></a> {<a id="E:99" class="idref" href="#E:99"><span class="id" title="binder">E</span></a>} (<a id="step:100" class="idref" href="#step:100"><span class="id" title="binder">step</span></a> : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:99"><span class="id" title="variable">E</span></a> (<a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#e03f39daf98516fa530d3f6f5a1b4d<sub>92</sub>"><span class="id" title="notation">+</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a>)) : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:99"><span class="id" title="variable">E</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="ITrees.html#iter"><span class="id" title="definition">iter</span></a> (<span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="ITrees.html#step:100"><span class="id" title="variable">step</span></a>) <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#tt"><span class="id" title="constructor">tt</span></a>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab197"></a><h3 class="section">Mutual recursion</h3>
+
+<div class="paragraph"> </div>
+
+ Although <span class="inlinecode"><span class="id" title="var">iter</span></span> is sufficient to write tail-recursive functions like factorial, we can also define general recursion operators. 
+<div class="paragraph"> </div>
+
+ Interpret an itree in the context of a mutually recursive
+    definition (<span class="inlinecode"><span class="id" title="var">ctx</span></span>). 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="interp_mrec" class="idref" href="#interp_mrec"><span class="id" title="definition">interp_mrec</span></a> {<a id="D:101" class="idref" href="#D:101"><span class="id" title="binder">D</span></a> <a id="E:102" class="idref" href="#E:102"><span class="id" title="binder">E</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="ctx:103" class="idref" href="#ctx:103"><span class="id" title="binder">ctx</span></a> : <a class="idref" href="ITrees.html#D:101"><span class="id" title="variable">D</span></a> <a class="idref" href="ITrees.html#9c8bef063c7fa9f64f46b0c3c7afdd38"><span class="id" title="notation">~&gt;</span></a> <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> (<a class="idref" href="ITrees.html#D:101"><span class="id" title="variable">D</span></a> <a class="idref" href="ITrees.html#025d6c7e3112e73e8cdbce045a3e6f<sub>38</sub>"><span class="id" title="notation">+'</span></a> <a class="idref" href="ITrees.html#E:102"><span class="id" title="variable">E</span></a>)) : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> (<a class="idref" href="ITrees.html#D:101"><span class="id" title="variable">D</span></a> <a class="idref" href="ITrees.html#025d6c7e3112e73e8cdbce045a3e6f<sub>38</sub>"><span class="id" title="notation">+'</span></a> <a class="idref" href="ITrees.html#E:102"><span class="id" title="variable">E</span></a>) <a class="idref" href="ITrees.html#9c8bef063c7fa9f64f46b0c3c7afdd38"><span class="id" title="notation">~&gt;</span></a> <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:102"><span class="id" title="variable">E</span></a> :=<br/>
+<span class="id" title="keyword">fun</span> <a id="R:104" class="idref" href="#R:104"><span class="id" title="binder">R</span></a> ⇒<br/>
+<a class="idref" href="ITrees.html#iter"><span class="id" title="definition">iter</span></a> (<span class="id" title="keyword">fun</span> <a id="t:105" class="idref" href="#t:105"><span class="id" title="binder">t</span></a> : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> (<a class="idref" href="ITrees.html#D:101"><span class="id" title="variable">D</span></a> <a class="idref" href="ITrees.html#025d6c7e3112e73e8cdbce045a3e6f<sub>38</sub>"><span class="id" title="notation">+'</span></a> <a class="idref" href="ITrees.html#E:102"><span class="id" title="variable">E</span></a>) <a class="idref" href="ITrees.html#R:104"><span class="id" title="variable">R</span></a> ⇒<br/>
+&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="ITrees.html#observe"><span class="id" title="definition">observe</span></a> <a class="idref" href="ITrees.html#t:105"><span class="id" title="variable">t</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;| <a class="idref" href="ITrees.html#RetF"><span class="id" title="constructor">RetF</span></a> <span class="id" title="var">r</span> ⇒ <a class="idref" href="ITrees.html#Ret"><span class="id" title="abbreviation">Ret</span></a> (<a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#inr"><span class="id" title="constructor">inr</span></a> <span class="id" title="var">r</span>)<br/>
+&nbsp;| <a class="idref" href="ITrees.html#TauF"><span class="id" title="constructor">TauF</span></a> <span class="id" title="var">t</span> ⇒ <a class="idref" href="ITrees.html#Ret"><span class="id" title="abbreviation">Ret</span></a> (<a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#inl"><span class="id" title="constructor">inl</span></a> <a class="idref" href="ITrees.html#t:105"><span class="id" title="variable">t</span></a>)<br/>
+&nbsp;| <a class="idref" href="ITrees.html#VisF"><span class="id" title="constructor">VisF</span></a> (<a class="idref" href="ITrees.html#inl1"><span class="id" title="constructor">inl1</span></a> <span class="id" title="var">d</span>) <span class="id" title="var">k</span> ⇒ <a class="idref" href="ITrees.html#Ret"><span class="id" title="abbreviation">Ret</span></a> (<a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#inl"><span class="id" title="constructor">inl</span></a> (<a class="idref" href="ITrees.html#ctx:103"><span class="id" title="variable">ctx</span></a> <span class="id" title="var">_</span> <span class="id" title="var">d</span> <a class="idref" href="ITrees.html#3530f89eeba6738f103e1c4744407abc"><span class="id" title="notation">&gt;&gt;=</span></a> <span class="id" title="var">k</span>))<br/>
+&nbsp;| <a class="idref" href="ITrees.html#VisF"><span class="id" title="constructor">VisF</span></a> (<a class="idref" href="ITrees.html#inr1"><span class="id" title="constructor">inr1</span></a> <span class="id" title="var">e</span>) <span class="id" title="var">k</span> ⇒ <a class="idref" href="ITrees.html#Vis"><span class="id" title="abbreviation">Vis</span></a> <span class="id" title="var">e</span> (<span class="id" title="keyword">fun</span> <a id="x:106" class="idref" href="#x:106"><span class="id" title="binder">x</span></a> ⇒ <a class="idref" href="ITrees.html#Ret"><span class="id" title="abbreviation">Ret</span></a> (<a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#inl"><span class="id" title="constructor">inl</span></a> (<span class="id" title="var">k</span> <a class="idref" href="ITrees.html#x:106"><span class="id" title="variable">x</span></a>)))<br/>
+&nbsp;<span class="id" title="keyword">end</span>).<br/><hr class='doublespaceincode'/>
+</div>
+
+<div class="doc">
+Unfold a mutually recursive definition into separate trees,
+resolving the mutual references. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="mrec" class="idref" href="#mrec"><span class="id" title="definition">mrec</span></a> {<a id="D:107" class="idref" href="#D:107"><span class="id" title="binder">D</span></a> <a id="E:108" class="idref" href="#E:108"><span class="id" title="binder">E</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="ctx:109" class="idref" href="#ctx:109"><span class="id" title="binder">ctx</span></a> : <a class="idref" href="ITrees.html#D:107"><span class="id" title="variable">D</span></a> <a class="idref" href="ITrees.html#9c8bef063c7fa9f64f46b0c3c7afdd38"><span class="id" title="notation">~&gt;</span></a> <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> (<a class="idref" href="ITrees.html#D:107"><span class="id" title="variable">D</span></a> <a class="idref" href="ITrees.html#025d6c7e3112e73e8cdbce045a3e6f<sub>38</sub>"><span class="id" title="notation">+'</span></a> <a class="idref" href="ITrees.html#E:108"><span class="id" title="variable">E</span></a>)) : <a class="idref" href="ITrees.html#D:107"><span class="id" title="variable">D</span></a> <a class="idref" href="ITrees.html#9c8bef063c7fa9f64f46b0c3c7afdd38"><span class="id" title="notation">~&gt;</span></a> <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:108"><span class="id" title="variable">E</span></a> :=<br/>
+<span class="id" title="keyword">fun</span> <a id="R:110" class="idref" href="#R:110"><span class="id" title="binder">R</span></a> <a id="d:111" class="idref" href="#d:111"><span class="id" title="binder">d</span></a> ⇒ <a class="idref" href="ITrees.html#interp_mrec"><span class="id" title="definition">interp_mrec</span></a> <a class="idref" href="ITrees.html#ctx:109"><span class="id" title="variable">ctx</span></a> (<a class="idref" href="ITrees.html#ctx:109"><span class="id" title="variable">ctx</span></a> <span class="id" title="var">_</span> <a class="idref" href="ITrees.html#d:111"><span class="id" title="variable">d</span></a>).<br/><hr class='doublespaceincode'/>
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="callE" class="idref" href="#callE"><span class="id" title="definition, inductive"><span id="callE_rect" class="id"><span id="callE_ind" class="id"><span id="callE_rec" class="id"><span id="callE_sind" class="id">callE</span></span></span></span></span></a> (<a id="A:112" class="idref" href="#A:112"><span class="id" title="binder">A</span></a> <a id="B:113" class="idref" href="#B:113"><span class="id" title="binder">B</span></a> : <span class="id" title="keyword">Type</span>) : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;| <a id="Call" class="idref" href="#Call"><span class="id" title="constructor">Call</span></a> : <a class="idref" href="ITrees.html#A:112"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="ITrees.html#callE:114"><span class="id" title="inductive">callE</span></a> <a class="idref" href="ITrees.html#A:112"><span class="id" title="variable">A</span></a> <a class="idref" href="ITrees.html#B:113"><span class="id" title="variable">B</span></a> <a class="idref" href="ITrees.html#B:113"><span class="id" title="variable">B</span></a>.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Arguments</span> <a class="idref" href="ITrees.html#Call"><span class="id" title="constructor">Call</span></a> {<span class="id" title="var">A</span> <span class="id" title="var">B</span>}.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Definition</span> <a id="calling'" class="idref" href="#calling'"><span class="id" title="definition">calling'</span></a> {<a id="A:116" class="idref" href="#A:116"><span class="id" title="binder">A</span></a> <a id="B:117" class="idref" href="#B:117"><span class="id" title="binder">B</span></a>} {<a id="F:118" class="idref" href="#F:118"><span class="id" title="binder">F</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="f:119" class="idref" href="#f:119"><span class="id" title="binder">f</span></a> : <a class="idref" href="ITrees.html#A:116"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#F:118"><span class="id" title="variable">F</span></a> <a class="idref" href="ITrees.html#B:117"><span class="id" title="variable">B</span></a>) : <a class="idref" href="ITrees.html#callE"><span class="id" title="inductive">callE</span></a> <a class="idref" href="ITrees.html#A:116"><span class="id" title="variable">A</span></a> <a class="idref" href="ITrees.html#B:117"><span class="id" title="variable">B</span></a> <a class="idref" href="ITrees.html#9c8bef063c7fa9f64f46b0c3c7afdd38"><span class="id" title="notation">~&gt;</span></a> <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#F:118"><span class="id" title="variable">F</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <a id="e:120" class="idref" href="#e:120"><span class="id" title="binder">e</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="ITrees.html#e:120"><span class="id" title="variable">e</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="ITrees.html#Call"><span class="id" title="constructor">Call</span></a> <span class="id" title="var">a</span> ⇒ <a class="idref" href="ITrees.html#f:119"><span class="id" title="variable">f</span></a> <span class="id" title="var">a</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+
+<div class="doc">
+Interpret a single recursive definition. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="rec" class="idref" href="#rec"><span class="id" title="definition">rec</span></a> {<a id="E:122" class="idref" href="#E:122"><span class="id" title="binder">E</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>} {<a id="A:123" class="idref" href="#A:123"><span class="id" title="binder">A</span></a> <a id="B:124" class="idref" href="#B:124"><span class="id" title="binder">B</span></a> : <span class="id" title="keyword">Type</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="body:125" class="idref" href="#body:125"><span class="id" title="binder">body</span></a> : <a class="idref" href="ITrees.html#A:123"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> (<a class="idref" href="ITrees.html#callE"><span class="id" title="inductive">callE</span></a> <a class="idref" href="ITrees.html#A:123"><span class="id" title="variable">A</span></a> <a class="idref" href="ITrees.html#B:124"><span class="id" title="variable">B</span></a> <a class="idref" href="ITrees.html#025d6c7e3112e73e8cdbce045a3e6f<sub>38</sub>"><span class="id" title="notation">+'</span></a> <a class="idref" href="ITrees.html#E:122"><span class="id" title="variable">E</span></a>) <a class="idref" href="ITrees.html#B:124"><span class="id" title="variable">B</span></a>) :<br/>
+&nbsp;&nbsp;<a class="idref" href="ITrees.html#A:123"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:122"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#B:124"><span class="id" title="variable">B</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="a:126" class="idref" href="#a:126"><span class="id" title="binder">a</span></a> ⇒ <a class="idref" href="ITrees.html#mrec"><span class="id" title="definition">mrec</span></a> (<a class="idref" href="ITrees.html#calling'"><span class="id" title="definition">calling'</span></a> <a class="idref" href="ITrees.html#body:125"><span class="id" title="variable">body</span></a>) (<a class="idref" href="ITrees.html#Call"><span class="id" title="constructor">Call</span></a> <a class="idref" href="ITrees.html#a:126"><span class="id" title="variable">a</span></a>).<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Definition</span> <a id="call" class="idref" href="#call"><span class="id" title="definition">call</span></a> {<a id="E:127" class="idref" href="#E:127"><span class="id" title="binder">E</span></a> <a id="A:128" class="idref" href="#A:128"><span class="id" title="binder">A</span></a> <a id="B:129" class="idref" href="#B:129"><span class="id" title="binder">B</span></a>} (<a id="a:130" class="idref" href="#a:130"><span class="id" title="binder">a</span></a>:<a class="idref" href="ITrees.html#A:128"><span class="id" title="variable">A</span></a>) : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> (<a class="idref" href="ITrees.html#callE"><span class="id" title="inductive">callE</span></a> <a class="idref" href="ITrees.html#A:128"><span class="id" title="variable">A</span></a> <a class="idref" href="ITrees.html#B:129"><span class="id" title="variable">B</span></a> <a class="idref" href="ITrees.html#025d6c7e3112e73e8cdbce045a3e6f<sub>38</sub>"><span class="id" title="notation">+'</span></a> <a class="idref" href="ITrees.html#E:127"><span class="id" title="variable">E</span></a>) <a class="idref" href="ITrees.html#B:129"><span class="id" title="variable">B</span></a> := <a class="idref" href="ITrees.html#trigger"><span class="id" title="definition">trigger</span></a> (<a class="idref" href="ITrees.html#inl1"><span class="id" title="constructor">inl1</span></a> (<a class="idref" href="ITrees.html#Call"><span class="id" title="constructor">Call</span></a> <a class="idref" href="ITrees.html#a:130"><span class="id" title="variable">a</span></a>)).<br/>
+</div>
+
+<div class="doc">
+Here's some syntactic sugar with a notation <span class="inlinecode"><span class="id" title="var">mrec</span>-<span class="id" title="keyword">fix</span></span>. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <a id="rec_fix" class="idref" href="#rec_fix"><span class="id" title="definition">rec_fix</span></a> {<a id="E:131" class="idref" href="#E:131"><span class="id" title="binder">E</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>} {<a id="A:132" class="idref" href="#A:132"><span class="id" title="binder">A</span></a> <a id="B:133" class="idref" href="#B:133"><span class="id" title="binder">B</span></a> : <span class="id" title="keyword">Type</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="body:134" class="idref" href="#body:134"><span class="id" title="binder">body</span></a> : <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="ITrees.html#A:132"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> (<a class="idref" href="ITrees.html#callE"><span class="id" title="inductive">callE</span></a> <a class="idref" href="ITrees.html#A:132"><span class="id" title="variable">A</span></a> <a class="idref" href="ITrees.html#B:133"><span class="id" title="variable">B</span></a> <a class="idref" href="ITrees.html#025d6c7e3112e73e8cdbce045a3e6f<sub>38</sub>"><span class="id" title="notation">+'</span></a> <a class="idref" href="ITrees.html#E:131"><span class="id" title="variable">E</span></a>) <a class="idref" href="ITrees.html#B:133"><span class="id" title="variable">B</span></a><a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="ITrees.html#A:132"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> (<a class="idref" href="ITrees.html#callE"><span class="id" title="inductive">callE</span></a> <a class="idref" href="ITrees.html#A:132"><span class="id" title="variable">A</span></a> <a class="idref" href="ITrees.html#B:133"><span class="id" title="variable">B</span></a> <a class="idref" href="ITrees.html#025d6c7e3112e73e8cdbce045a3e6f<sub>38</sub>"><span class="id" title="notation">+'</span></a> <a class="idref" href="ITrees.html#E:131"><span class="id" title="variable">E</span></a>) <a class="idref" href="ITrees.html#B:133"><span class="id" title="variable">B</span></a><a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a>)<br/>
+&nbsp;&nbsp;: <a class="idref" href="ITrees.html#A:132"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="ITrees.html#E:131"><span class="id" title="variable">E</span></a> <a class="idref" href="ITrees.html#B:133"><span class="id" title="variable">B</span></a><br/>
+&nbsp;&nbsp;&nbsp;:= <a class="idref" href="ITrees.html#rec"><span class="id" title="definition">rec</span></a> (<a class="idref" href="ITrees.html#body:134"><span class="id" title="variable">body</span></a> <a class="idref" href="ITrees.html#call"><span class="id" title="definition">call</span></a>).<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Notation</span> <a id="c63469a10d1bac0b185ff9acd0f7273e" class="idref" href="#c63469a10d1bac0b185ff9acd0f7273e"><span class="id" title="notation">&quot;</span></a>'rec-fix' f a := g" := (<a class="idref" href="ITrees.html#rec_fix"><span class="id" title="definition">rec_fix</span></a> (<span class="id" title="keyword">fun</span> <a id="f:135" class="idref" href="#f:135"><span class="id" title="binder">f</span></a> <a id="a:136" class="idref" href="#a:136"><span class="id" title="binder">a</span></a> ⇒ <span class="id" title="var">g</span>))<br/>
+&nbsp;&nbsp;&nbsp;(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200, <span class="id" title="var">f</span> <span class="id" title="var">name</span>, <span class="id" title="var">a</span> <span class="id" title="tactic">pattern</span>).<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Definition</span> <a id="fact_body" class="idref" href="#fact_body"><span class="id" title="definition">fact_body</span></a> (<a id="x:137" class="idref" href="#x:137"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> (<a class="idref" href="ITrees.html#callE"><span class="id" title="inductive">callE</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="ITrees.html#025d6c7e3112e73e8cdbce045a3e6f<sub>38</sub>"><span class="id" title="notation">+'</span></a> <a class="idref" href="Utils.html#voidE"><span class="id" title="inductive">voidE</span></a>) <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="ITrees.html#x:137"><span class="id" title="variable">x</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| 0 ⇒ <a class="idref" href="ITrees.html#Ret"><span class="id" title="abbreviation">Ret</span></a> 1<br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#S"><span class="id" title="constructor">S</span></a> <span class="id" title="var">m</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="y:139" class="idref" href="#y:139"><span class="id" title="binder">y</span></a> <a class="idref" href="ITrees.html#0959d6531a3c2d5ddb2177e5cf7c15a<sub>8</sub>"><span class="id" title="notation">&lt;-</span></a> <a class="idref" href="ITrees.html#call"><span class="id" title="definition">call</span></a> <span class="id" title="var">m</span> <a class="idref" href="ITrees.html#0959d6531a3c2d5ddb2177e5cf7c15a<sub>8</sub>"><span class="id" title="notation">;;</span></a>  </div>
+
+<div class="doc">
+Recursively compute <span class="inlinecode"><span class="id" title="var">y</span></span> <span class="inlinecode">:=</span> <span class="inlinecode"><span class="id" title="var">m</span>!</span> 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="ITrees.html#Ret"><span class="id" title="abbreviation">Ret</span></a> (<a class="idref" href="ITrees.html#x:137"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Peano.html#ea2ff3d561159081cea6fb2e8113cc<sub>54</sub>"><span class="id" title="notation">×</span></a> <a class="idref" href="ITrees.html#y:139"><span class="id" title="variable">y</span></a>)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+
+<div class="doc">
+The factorial function itself is defined as an ITree by "tying
+    the knot" using <span class="inlinecode"><span class="id" title="keyword">rec</span></span>.
+ 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="factorial" class="idref" href="#factorial"><span class="id" title="definition">factorial</span></a> (<a id="n:140" class="idref" href="#n:140"><span class="id" title="binder">n</span></a> : <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) : <a class="idref" href="ITrees.html#itree"><span class="id" title="record">itree</span></a> <a class="idref" href="Utils.html#voidE"><span class="id" title="inductive">voidE</span></a> <a class="idref" href="http://coq.inria.fr/library//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="ITrees.html#rec"><span class="id" title="definition">rec</span></a> <a class="idref" href="ITrees.html#fact_body"><span class="id" title="definition">fact_body</span></a> <a class="idref" href="ITrees.html#n:140"><span class="id" title="variable">n</span></a>.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="tactic">compute</span> <span class="id" title="keyword">in</span> <a class="idref" href="ITrees.html#burn"><span class="id" title="definition">burn</span></a> 10 (<a class="idref" href="ITrees.html#factorial"><span class="id" title="definition">factorial</span></a> 6).<br/><hr class='doublespaceincode'/>
+<span class="comment">(*&nbsp;2024-06-07&nbsp;10:32&nbsp;*)</span><br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="coqindex.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>
