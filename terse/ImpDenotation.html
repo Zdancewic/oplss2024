@@ -1,0 +1,302 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="common/css/sf.css" rel="stylesheet" type="text/css" />
+<title>ImpDenotation</title>
+<link href="common/jquery-ui/jquery-ui.css" rel="stylesheet">
+<script src="common/jquery-ui/external/jquery/jquery.js"></script>
+<script src="common/jquery-ui/jquery-ui.js"></script>
+<script src="common/toggleproofs.js"></script>
+<link href="common/css/rip.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="common/slides.js"></script>
+<link href="common/css/slides.css" rel="stylesheet" type="text/css"/>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+<div id='logoinheader'><a href='https://softwarefoundations.cis.upenn.edu'>
+<img src='common/media/image/sf_logo_sm.png' alt='Software Foundations Logo'></a></div>
+<div class='booktitleinheader'><a href='index.html'>Volume 7: Reasoning about Interactive Programs</a></div>
+<ul id='menu'>
+   <li class='section_name'><a href='toc.html'>Table of Contents</a></li>
+   <li class='section_name'><a href='coqindex.html'>Index</a></li>
+</ul>
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">ImpDenotation</h1>
+
+
+<div class="doc">
+<a id="lab269"></a><h2 class="section">Imp Semantics, Denotationally</h2>
+
+<div class="paragraph"> </div>
+
+ We started by wanting to give a "functional" semantics to Imp. Now we
+can! 
+<div class="paragraph"> </div>
+
+<a id="lab270"></a><h3 class="section">Representing Imp as Interaction Trees</h3>
+
+<div class="paragraph"> </div>
+
+ Imp programs interact with a memory. We will represent these interactions
+   through read and writes events 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Variant</span> <span class="id" title="var">MemE</span> : <span class="id" title="keyword">Type</span> → <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;| <span class="id" title="var">Read</span>  (<span class="id" title="var">x</span> : <span class="id" title="var">string</span>)           : 	<span class="id" title="var">MemE</span> <span class="id" title="var">val</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">Write</span> (<span class="id" title="var">x</span> : <span class="id" title="var">string</span>) (<span class="id" title="var">v</span> : <span class="id" title="var">val</span>) : 	<span class="id" title="var">MemE</span> <span class="id" title="var">unit</span><br/>
+.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">rd</span> <span class="id" title="var">x</span>   := <span class="id" title="var">ITree.trigger</span> (<span class="id" title="var">Read</span> <span class="id" title="var">x</span>).<br/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">wr</span> <span class="id" title="var">x</span> <span class="id" title="var">v</span> := <span class="id" title="var">ITree.trigger</span> (<span class="id" title="var">Write</span> <span class="id" title="var">x</span> <span class="id" title="var">v</span>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab271"></a><h3 class="section">Arithmetic operations</h3>
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Variant</span> <span class="id" title="var">aop</span> :=  | <span class="id" title="var">op_plus</span> | <span class="id" title="var">op_minus</span> | <span class="id" title="var">op_mult</span>.<br/>
+</div>
+
+<div class="doc">
+And their semantics as Coq functions: 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">aop_sem</span> (<span class="id" title="var">op</span> : <span class="id" title="var">aop</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">op</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">op_plus</span> ⇒ <span class="id" title="var">add</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">op_minus</span> ⇒ <span class="id" title="var">sub</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">op_mult</span> ⇒ <span class="id" title="var">mult</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab272"></a><h3 class="section">Translation into ITrees</h3>
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Reserved Notation</span> &quot;⟦ a '⟧a'".<br/>
+<span class="id" title="keyword">Fixpoint</span> <span class="id" title="var">repr_aexp</span> (<span class="id" title="var">a</span> : <span class="id" title="var">aexp</span>) : <span class="id" title="var">itree</span> <span class="id" title="var">MemE</span> <span class="id" title="var">val</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">aop</span> <span class="id" title="var">op</span> <span class="id" title="var">a</span> <span class="id" title="var">b</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">a</span> &lt;- ⟦ <span class="id" title="var">a</span> ⟧<span class="id" title="var">a</span>;;        <span class="comment">(*&nbsp;We&nbsp;simply&nbsp;bind&nbsp;recursive&nbsp;calls&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">b</span> &lt;- ⟦ <span class="id" title="var">b</span> ⟧<span class="id" title="var">a</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Ret</span> (<span class="id" title="var">aop_sem</span> <span class="id" title="var">op</span> <span class="id" title="var">a</span> <span class="id" title="var">b</span>)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">a</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">ANum</span> <span class="id" title="var">n</span>      ⇒ <span class="id" title="var">Ret</span> <span class="id" title="var">n</span> <span class="comment">(*&nbsp;Pure&nbsp;computation:&nbsp;we&nbsp;simply&nbsp;return&nbsp;n&nbsp;*)</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">AId</span> <span class="id" title="var">x</span>       ⇒ <span class="id" title="var">rd</span> <span class="id" title="var">x</span>  <span class="comment">(*&nbsp;We&nbsp;put&nbsp;the&nbsp;responsability&nbsp;on&nbsp;the&nbsp;environment:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;we&nbsp;just&nbsp;"trigger"&nbsp;the&nbsp;read&nbsp;*)</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">APlus</span> <span class="id" title="var">a</span> <span class="id" title="var">b</span> ⇒ <span class="id" title="var">aop</span> <span class="id" title="var">op_plus</span> <span class="id" title="var">a</span> <span class="id" title="var">b</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">AMinus</span> <span class="id" title="var">a</span> <span class="id" title="var">b</span> ⇒ <span class="id" title="var">aop</span> <span class="id" title="var">op_minus</span> <span class="id" title="var">a</span> <span class="id" title="var">b</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">AMult</span> <span class="id" title="var">a</span> <span class="id" title="var">b</span> ⇒ <span class="id" title="var">aop</span> <span class="id" title="var">op_mult</span> <span class="id" title="var">a</span> <span class="id" title="var">b</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+<span class="id" title="keyword">where</span> &quot;⟦ a '⟧a'" := (<span class="id" title="var">repr_aexp</span> <span class="id" title="var">a</span>)<br/>
+.<br/>
+</div>
+
+<div class="doc">
+<a id="lab273"></a><h3 class="section">Boolean operations</h3>
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Reserved Notation</span> &quot;⟦ b '⟧b'".<br/>
+<span class="id" title="keyword">Fixpoint</span> <span class="id" title="var">repr_bexp</span> (<span class="id" title="var">b</span> : <span class="id" title="var">bexp</span>) : <span class="id" title="var">itree</span> <span class="id" title="var">MemE</span> <span class="id" title="var">bool</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">b</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| &lt;{ <span class="id" title="var">true</span>  }&gt;     ⇒ <span class="id" title="var">Ret</span> <span class="id" title="var">true</span><br/>
+&nbsp;&nbsp;| &lt;{ <span class="id" title="var">false</span> }&gt;     ⇒ <span class="id" title="var">Ret</span> <span class="id" title="var">false</span><br/>
+<br/>
+&nbsp;&nbsp;| &lt;{ <span class="id" title="var">a<sub>1</sub></span> = <span class="id" title="var">a<sub>2</sub></span> }&gt; ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x</span> &lt;- ⟦ <span class="id" title="var">a<sub>1</sub></span> ⟧<span class="id" title="var">a</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">y</span> &lt;- ⟦ <span class="id" title="var">a<sub>2</sub></span> ⟧<span class="id" title="var">a</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Ret</span> (<span class="id" title="var">x</span> =? <span class="id" title="var">y</span>)<br/>
+<br/>
+&nbsp;&nbsp;| &lt;{ <span class="id" title="var">a<sub>1</sub></span> ≠ <span class="id" title="var">a<sub>2</sub></span> }&gt; ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x</span> &lt;- ⟦ <span class="id" title="var">a<sub>1</sub></span> ⟧<span class="id" title="var">a</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">y</span> &lt;- ⟦ <span class="id" title="var">a<sub>2</sub></span> ⟧<span class="id" title="var">a</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Ret</span> (<span class="id" title="var">negb</span>(<span class="id" title="var">x</span> =? <span class="id" title="var">y</span>))<br/>
+<br/>
+&nbsp;&nbsp;| &lt;{ <span class="id" title="var">a<sub>1</sub></span> &gt; <span class="id" title="var">a<sub>2</sub></span> }&gt; ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x</span> &lt;- ⟦ <span class="id" title="var">a<sub>1</sub></span> ⟧<span class="id" title="var">a</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">y</span> &lt;- ⟦ <span class="id" title="var">a<sub>2</sub></span> ⟧<span class="id" title="var">a</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Ret</span> (<span class="id" title="var">negb</span>(<span class="id" title="var">x</span> &lt;=? <span class="id" title="var">y</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;| &lt;{ <span class="id" title="var">a<sub>1</sub></span> ≤ <span class="id" title="var">a<sub>2</sub></span> }&gt; ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x</span> &lt;- ⟦ <span class="id" title="var">a<sub>1</sub></span> ⟧<span class="id" title="var">a</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">y</span> &lt;- ⟦ <span class="id" title="var">a<sub>2</sub></span> ⟧<span class="id" title="var">a</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Ret</span> (<span class="id" title="var">x</span> &lt;=? <span class="id" title="var">y</span>)<br/>
+<br/>
+&nbsp;&nbsp;| &lt;{ <span class="id" title="var">b<sub>1</sub></span> &amp;&amp; <span class="id" title="var">b<sub>2</sub></span> }&gt; ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x</span> &lt;- ⟦ <span class="id" title="var">b<sub>1</sub></span> ⟧<span class="id" title="var">b</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">y</span> &lt;- ⟦ <span class="id" title="var">b<sub>2</sub></span> ⟧<span class="id" title="var">b</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Ret</span> (<span class="id" title="var">andb</span> <span class="id" title="var">x</span> <span class="id" title="var">y</span>)<br/>
+<br/>
+&nbsp;&nbsp;| &lt;{ ¬<span class="id" title="var">b</span> }&gt; ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x</span> &lt;- ⟦ <span class="id" title="var">b</span> ⟧<span class="id" title="var">b</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Ret</span> (<span class="id" title="var">negb</span> <span class="id" title="var">x</span>)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+<span class="id" title="keyword">where</span> &quot;⟦ b '⟧b'" := (<span class="id" title="var">repr_bexp</span> <span class="id" title="var">b</span>)<br/>
+.<br/>
+</div>
+
+<div class="doc">
+<a id="lab274"></a><h3 class="section">Representation of commands</h3>
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Reserved Notation</span> &quot;⟦ c ⟧".<br/>
+<span class="id" title="keyword">Fixpoint</span> <span class="id" title="var">repr_com</span> (<span class="id" title="var">c</span> : <span class="id" title="var">com</span>) : <span class="id" title="var">itree</span> <span class="id" title="var">MemE</span> <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">c</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| &lt;{ <span class="id" title="var">skip</span> }&gt; ⇒ <span class="id" title="var">Ret</span> <span class="id" title="var">tt</span><br/>
+&nbsp;&nbsp;| &lt;{ <span class="id" title="var">x</span> := <span class="id" title="var">a</span> }&gt; ⇒ <span class="id" title="var">v</span> &lt;- ⟦ <span class="id" title="var">a</span> ⟧<span class="id" title="var">a</span>;; <span class="id" title="var">wr</span> <span class="id" title="var">x</span> <span class="id" title="var">v</span><br/>
+&nbsp;&nbsp;| &lt;{ <span class="id" title="var">c<sub>1</sub></span> ; <span class="id" title="var">c<sub>2</sub></span> }&gt; ⇒ ⟦<span class="id" title="var">c<sub>1</sub></span>⟧;; ⟦<span class="id" title="var">c<sub>2</sub></span>⟧<br/>
+<br/>
+&nbsp;&nbsp;| &lt;{ <span class="id" title="keyword">if</span> <span class="id" title="var">b</span> <span class="id" title="keyword">then</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="keyword">else</span> <span class="id" title="var">c<sub>2</sub></span> <span class="id" title="keyword">end</span> }&gt; ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x</span> &lt;- ⟦ <span class="id" title="var">b</span> ⟧<span class="id" title="var">b</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">x</span> <span class="id" title="keyword">then</span> ⟦<span class="id" title="var">c<sub>1</sub></span>⟧ <span class="id" title="keyword">else</span> ⟦<span class="id" title="var">c<sub>2</sub></span>⟧<br/>
+<br/>
+&nbsp;&nbsp;| &lt;{ <span class="id" title="var">while</span> <span class="id" title="var">b</span> <span class="id" title="tactic">do</span> <span class="id" title="var">c</span> <span class="id" title="keyword">end</span> }&gt; ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> (                   <span class="comment">(*&nbsp;&lt;==&nbsp;NOTE:&nbsp;use&nbsp;of&nbsp;_repeat_&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x</span> &lt;- ⟦<span class="id" title="var">b</span>⟧<span class="id" title="var">b</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">then</span> ⟦<span class="id" title="var">c</span>⟧;; <span class="id" title="var">Ret</span> (<span class="id" title="var">inl</span> <span class="id" title="var">tt</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">Ret</span> (<span class="id" title="var">inr</span> <span class="id" title="var">tt</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+<span class="id" title="keyword">where</span> &quot;⟦ c ⟧" := (<span class="id" title="var">repr_com</span> <span class="id" title="var">c</span>)<br/>
+.<br/>
+</div>
+
+<div class="doc">
+<a id="lab275"></a><h3 class="section">Some observations</h3>
+
+<div class="paragraph"> </div>
+
+ This version of the Imp semantics is:
+<ul class="doclist">
+<li> defined by <i>structural induction</i> on the syntax.
+
+</li>
+<li> is <i>parametric</i> in the interpretation of memory events
+
+</li>
+<li> is compatible with extraction (for interpretation)
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+ In some sense, this is still <i>syntactic</i>, but it already has "unfolded" the
+control-flow of the program into a big (possibly infinite) tree. That will make
+proving <span class="inlinecode"><span class="id" title="var">Imp</span></span> equivalences easier.  
+<div class="paragraph"> </div>
+
+<a id="lab276"></a><h3 class="section">Memory Event Handlers</h3>
+
+<div class="paragraph"> </div>
+
+ Here, <span class="inlinecode"><span class="id" title="var">stateT</span></span> is a <i>monad transformer</i> that lifts a monadic
+computation into the <span class="inlinecode"><span class="id" title="var">state</span></span> monad: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Notation</span> <span class="id" title="var">M</span> := (<span class="id" title="var">stateT</span> <span class="id" title="var">mem</span> (<span class="id" title="var">itree</span> <span class="id" title="var">void1</span>)).<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Example</span> <span class="id" title="var">Mdef</span> : <span class="id" title="var">M</span> <span class="id" title="var">unit</span> = (<span class="id" title="var">mem</span> → <span class="id" title="var">itree</span> <span class="id" title="var">void1</span> (<span class="id" title="var">mem</span> × <span class="id" title="var">unit</span>)).<br/>
+</div>
+
+<div class="doc">
+The handler for <span class="inlinecode"><span class="id" title="var">MemE</span></span> events 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">handle_Mem</span> : <span class="id" title="var">MemE</span> ~&gt; <span class="id" title="var">M</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <span class="id" title="var">e</span> <span class="id" title="var">st</span> ⇒ <span class="id" title="keyword">match</span> <span class="id" title="var">e</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Read</span> <span class="id" title="var">x</span>    ⇒ <span class="id" title="var">Ret</span> (<span class="id" title="var">st</span>, <span class="id" title="var">st</span> <span class="id" title="var">x</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Write</span> <span class="id" title="var">x</span> <span class="id" title="var">v</span> ⇒ <span class="id" title="var">Ret</span> (<span class="id" title="var">x</span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v</span>; <span class="id" title="var">st</span>, <span class="id" title="var">tt</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab277"></a><h3 class="section">Finally, some nice notation for Imp semantics</h3>
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Notation</span> &quot;'ℑ'" := (<span class="id" title="var">interp_state</span> <span class="id" title="var">handle_Mem</span>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0).<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">model_com</span> : <span class="id" title="var">com</span> → <span class="id" title="var">M</span> <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <span class="id" title="var">c</span> ⇒ <span class="id" title="var">ℑ</span> ⟦ <span class="id" title="var">c</span> ⟧.<br/>
+<span class="id" title="keyword">Notation</span> &quot;'⟦{' c '}⟧'" := (<span class="id" title="var">model_com</span> <span class="id" title="var">c</span>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab278"></a><h3 class="section">Running Factorial</h3>
+
+<div class="paragraph"> </div>
+
+ Now that we have a functional implementation of the <span class="inlinecode"><span class="id" title="var">Imp</span></span> semantics,
+ we can run it...
+
+<div class="paragraph"> </div>
+
+Unfortunately, the result has type <span class="inlinecode"><span class="id" title="var">string</span></span> <span class="inlinecode">→</span> <span class="inlinecode"><span class="id" title="var">nat</span></span>, and Coq prints it 
+in a very ugly way, so we've cheated...
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Eval</span> <span class="id" title="tactic">compute</span> <span class="id" title="keyword">in</span> (<span class="id" title="var">burn</span> 50 (⟦{ &lt;{ <span class="id" title="var">X</span> := 5 ; <span class="id" title="var">fact_in_coq</span> }&gt; }⟧ (<span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> ⇒ 0))).<br/>
+</div>
+
+<div class="doc">
+==&gt; 
+<br/>
+<span class="inlinecode"><span class="id" title="var">Ret</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">v</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">v</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| "Z" ⇒ 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| "Y" ⇒ 120<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| "X" ⇒ 5<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.)  : <span class="id" title="var">itree</span> <span class="id" title="var">mem</span> <span class="id" title="var">unit</span>
+</span>
+</div>
+
+<div class="doc">
+<a id="lab279"></a><h3 class="section">Exercise</h3>
+
+<div class="paragraph"> </div>
+
+ Challenge: add a "print" command to Imp. Use the following event signature. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Variant</span> <span class="id" title="var">PrintE</span> : <span class="id" title="keyword">Type</span> → <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;| <span class="id" title="var">print</span> (<span class="id" title="var">s</span>:<span class="id" title="var">string</span>) : <span class="id" title="var">PrintE</span> <span class="id" title="var">unit</span>.<br/>
+</div>
+
+<div class="doc">
+Set up the semantics so that the new denotation of a command has the type: <span class="inlinecode"><span class="id" title="var">MP</span></span> <span class="inlinecode"><span class="id" title="var">unit</span></span>. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">MP</span> := <span class="id" title="var">stateT</span> <span class="id" title="var">mem</span> (<span class="id" title="var">itree</span> <span class="id" title="var">PrintE</span>).<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="coqindex.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

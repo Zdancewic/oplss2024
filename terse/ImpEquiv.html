@@ -1,0 +1,805 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="common/css/sf.css" rel="stylesheet" type="text/css" />
+<title>ImpEquiv</title>
+<link href="common/jquery-ui/jquery-ui.css" rel="stylesheet">
+<script src="common/jquery-ui/external/jquery/jquery.js"></script>
+<script src="common/jquery-ui/jquery-ui.js"></script>
+<script src="common/toggleproofs.js"></script>
+<link href="common/css/rip.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="common/slides.js"></script>
+<link href="common/css/slides.css" rel="stylesheet" type="text/css"/>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+<div id='logoinheader'><a href='https://softwarefoundations.cis.upenn.edu'>
+<img src='common/media/image/sf_logo_sm.png' alt='Software Foundations Logo'></a></div>
+<div class='booktitleinheader'><a href='index.html'>Volume 7: Reasoning about Interactive Programs</a></div>
+<ul id='menu'>
+   <li class='section_name'><a href='toc.html'>Table of Contents</a></li>
+   <li class='section_name'><a href='coqindex.html'>Index</a></li>
+</ul>
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">ImpEquiv</h1>
+
+
+<div class="doc">
+<a id="lab280"></a><h2 class="section">Equivalence of Imp programs</h2>
+
+<div class="paragraph"> </div>
+
+ Each piece of syntax can be given a meaning in two steps:
+<br/>
+<span class="inlinecode">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">syntax</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→            (<span class="id" title="var">representation</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">itree</span> <span class="id" title="var">MemE</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→            (<span class="id" title="var">interpretation</span>)<br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="var">stateT</span> <span class="id" title="var">mem</span> (<span class="id" title="var">itree</span> ∅)
+</span> <a id="lab281"></a><h3 class="section">Definitions and elementary properties</h3>
+
+<div class="paragraph"> </div>
+
+ That means we have several notions of equivalence:
+<ul class="doclist">
+<li> <i>syntactic</i> equality (equal syntax)
+
+</li>
+<li> <i>representation</i> equality (equality as uninterpreted trees)
+
+</li>
+<li> <i>semantic</i> equality (equality as computations in the state monad )
+ 
+
+</li>
+</ul>
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">aexp_equiv</span> : <span class="id" title="var">rel</span> <span class="id" title="var">aexp</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <span class="id" title="var">a<sub>1</sub></span> <span class="id" title="var">a<sub>2</sub></span> ⇒ <span class="id" title="keyword">∀</span> σ, <span class="id" title="var">ℑ</span> ⟦ <span class="id" title="var">a<sub>1</sub></span> ⟧<span class="id" title="var">a</span> σ ≈ <span class="id" title="var">ℑ</span> ⟦ <span class="id" title="var">a<sub>2</sub></span> ⟧<span class="id" title="var">a</span> σ.<br/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">bexp_equiv</span> : <span class="id" title="var">rel</span> <span class="id" title="var">bexp</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <span class="id" title="var">b<sub>1</sub></span> <span class="id" title="var">b<sub>2</sub></span> ⇒ <span class="id" title="keyword">∀</span> σ, <span class="id" title="var">ℑ</span> ⟦ <span class="id" title="var">b<sub>1</sub></span> ⟧<span class="id" title="var">b</span> σ ≈ <span class="id" title="var">ℑ</span> ⟦ <span class="id" title="var">b<sub>2</sub></span> ⟧<span class="id" title="var">b</span> σ.<br/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">com_eq</span> : <span class="id" title="var">rel</span> <span class="id" title="var">com</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="var">c<sub>2</sub></span> ⇒ ⟦ <span class="id" title="var">c<sub>1</sub></span> ⟧ ≈ ⟦ <span class="id" title="var">c<sub>2</sub></span> ⟧.<br/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">com_equiv</span> : <span class="id" title="var">rel</span> <span class="id" title="var">com</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="var">c<sub>2</sub></span> ⇒ <span class="id" title="keyword">∀</span> σ, <span class="id" title="var">ℑ</span> ⟦ <span class="id" title="var">c<sub>1</sub></span> ⟧ σ ≈ <span class="id" title="var">ℑ</span> ⟦ <span class="id" title="var">c<sub>2</sub></span> ⟧ σ.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Infix</span> &quot;≈ₐ" := <span class="id" title="var">aexp_equiv</span> (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 20).<br/>
+<span class="id" title="keyword">Infix</span> &quot;≈ᵦ" := <span class="id" title="var">bexp_equiv</span> (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 20).<br/>
+<span class="id" title="keyword">Infix</span> &quot;≡" := <span class="id" title="var">com_eq</span> (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 20).<br/>
+<span class="id" title="keyword">Infix</span> &quot;≊" := <span class="id" title="var">com_equiv</span> (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 20).<br/>
+</div>
+
+<div class="doc">
+<a id="lab282"></a><h2 class="section">Elementary properties of program equivalences</h2>
+ We establish the following central properties:
+<ul class="doclist">
+<li> All equivalences of syntax considered are <i>equivalence relations</i>
+
+
+</li>
+<li> Representation equality is strictly tighter than semantic equality
+
+<div class="paragraph"> </div>
+
+
+</li>
+<li> All equivalences are congruences: they are compatible with every construction of the language
+
+</li>
+</ul>
+ 
+</div>
+
+<div class="doc">
+<a id="lab284"></a><h3 class="section">Semantically characterizing the MemE events</h3>
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">interp_state_rd</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">x</span> σ, <span class="id" title="var">ℑ</span> (<span class="id" title="var">rd</span> <span class="id" title="var">x</span>) σ ≈ <span class="id" title="var">Ret</span> (σ, σ <span class="id" title="var">x</span>).<br/>
+<div class="togglescript" id="proofcontrol1" onclick="toggleDisplay('proof1');toggleDisplay('proofcontrol1')"><span class="show"></span></div>
+<div class="proofscript" id="proof1" onclick="toggleDisplay('proof1');toggleDisplay('proofcontrol1')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <span class="id" title="var">rd</span>; <span class="id" title="tactic">intros</span>; <span class="id" title="var">now</span> <span class="id" title="var">norm</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">interp_state_wr</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">x</span> <span class="id" title="var">v</span> σ, <span class="id" title="var">ℑ</span> (<span class="id" title="var">wr</span> <span class="id" title="var">x</span> <span class="id" title="var">v</span>) σ ≈ <span class="id" title="var">Ret</span> (<span class="id" title="var">x</span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v</span> ; σ, <span class="id" title="var">tt</span>).<br/>
+<div class="togglescript" id="proofcontrol2" onclick="toggleDisplay('proof2');toggleDisplay('proofcontrol2')"><span class="show"></span></div>
+<div class="proofscript" id="proof2" onclick="toggleDisplay('proof2');toggleDisplay('proofcontrol2')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <span class="id" title="var">wr</span>; <span class="id" title="tactic">intros</span>; <span class="id" title="var">now</span> <span class="id" title="var">norm</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+
+<div class="doc">
+<a id="lab285"></a><h2 class="section">Semantically Characterizing Evaluation</h2>
+
+<div class="paragraph"> </div>
+
+ We can <i>prove</i> that the evaluation of arithmetic and boolean
+expressions in Imp is pure, and that it computes the same things as the "naive"
+evaluator. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">aexp_pure_aeval</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">a</span> σ,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">interp_state</span> <span class="id" title="var">handle_Mem</span> ⟦ <span class="id" title="var">a</span> ⟧<span class="id" title="var">a</span> σ ≈ <span class="id" title="var">Ret</span> (σ, <span class="id" title="var">aeval</span> σ <span class="id" title="var">a</span>).<br/>
+<div class="togglescript" id="proofcontrol3" onclick="toggleDisplay('proof3');toggleDisplay('proofcontrol3')"><span class="show"></span></div>
+<div class="proofscript" id="proof3" onclick="toggleDisplay('proof3');toggleDisplay('proofcontrol3')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">a</span>; <span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">now</span> <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">now</span> <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">norm</span>; <span class="id" title="tactic">rewrite</span> <span class="id" title="var">IHa1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">norm</span>; <span class="id" title="tactic">rewrite</span> <span class="id" title="var">IHa2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">norm</span>; <span class="id" title="tactic">rewrite</span> <span class="id" title="var">IHa1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">norm</span>; <span class="id" title="tactic">rewrite</span> <span class="id" title="var">IHa2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">norm</span>; <span class="id" title="tactic">rewrite</span> <span class="id" title="var">IHa1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">norm</span>; <span class="id" title="tactic">rewrite</span> <span class="id" title="var">IHa2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="var">norm</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">bexp_pure_beval</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">b</span> σ,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">interp_state</span> <span class="id" title="var">handle_Mem</span> ⟦ <span class="id" title="var">b</span> ⟧<span class="id" title="var">b</span> σ ≈ <span class="id" title="var">Ret</span> (σ, <span class="id" title="var">beval</span> σ <span class="id" title="var">b</span>).<br/>
+<div class="togglescript" id="proofcontrol4" onclick="toggleDisplay('proof4');toggleDisplay('proofcontrol4')"><span class="show"></span></div>
+<div class="proofscript" id="proof4" onclick="toggleDisplay('proof4');toggleDisplay('proofcontrol4')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">b</span>; <span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">now</span> <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">now</span> <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<span class="id" title="var">aexp_pure_aeval</span> <span class="id" title="var">a<sub>1</sub></span> σ).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<span class="id" title="var">aexp_pure_aeval</span> <span class="id" title="var">a<sub>2</sub></span> σ).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<span class="id" title="var">aexp_pure_aeval</span> <span class="id" title="var">a<sub>1</sub></span> σ).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">norm</span>. <span class="id" title="tactic">rewrite</span> (<span class="id" title="var">aexp_pure_aeval</span> <span class="id" title="var">a<sub>2</sub></span> σ).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<span class="id" title="var">aexp_pure_aeval</span> <span class="id" title="var">a<sub>1</sub></span> σ).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">norm</span>. <span class="id" title="tactic">rewrite</span> (<span class="id" title="var">aexp_pure_aeval</span> <span class="id" title="var">a<sub>2</sub></span> σ).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<span class="id" title="var">aexp_pure_aeval</span> <span class="id" title="var">a<sub>1</sub></span> σ).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">norm</span>. <span class="id" title="tactic">rewrite</span> (<span class="id" title="var">aexp_pure_aeval</span> <span class="id" title="var">a<sub>2</sub></span> σ).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">norm</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">IHb</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">IHb1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">IHb2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="var">norm</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+
+<div class="doc">
+<a id="lab286"></a><h2 class="section">Universally valid static rewrite rules: an inventory</h2>
+
+<div class="paragraph"> </div>
+
+  We can prove many properties of Imp programs even <i>without</i> understanding
+  how the semantics of memory works.
+
+<div class="paragraph"> </div>
+
+  We can create an inventory of such rewrite rules.
+
+<div class="paragraph"> </div>
+
+  Note that these rules would be valid even if we change the semantics of memory
+  operations (assuming arithmetic and booleans are pure).
+
+<div class="paragraph"> </div>
+
+<a id="lab287"></a><h3 class="section">Rules for arithmetic expressions</h3>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Variant</span> <span class="id" title="var">red_aexp</span> : <span class="id" title="var">rel</span> <span class="id" title="var">aexp</span> :=<br/>
+&nbsp;&nbsp;| <span class="id" title="var">rplus</span> (<span class="id" title="var">n</span> <span class="id" title="var">m</span> : <span class="id" title="var">val</span>)  : <span class="id" title="var">red_aexp</span> &lt;{ <span class="id" title="var">n</span> + <span class="id" title="var">m</span> }&gt; &lt;{ <span class="id" title="var">aop_sem</span> <span class="id" title="var">op_plus</span> <span class="id" title="var">n</span> <span class="id" title="var">m</span> }&gt;<br/>
+&nbsp;&nbsp;| <span class="id" title="var">rminus</span> (<span class="id" title="var">n</span> <span class="id" title="var">m</span> : <span class="id" title="var">val</span>) : <span class="id" title="var">red_aexp</span> &lt;{ <span class="id" title="var">n</span> - <span class="id" title="var">m</span> }&gt; &lt;{ <span class="id" title="var">aop_sem</span> <span class="id" title="var">op_minus</span> <span class="id" title="var">n</span> <span class="id" title="var">m</span> }&gt;<br/>
+&nbsp;&nbsp;| <span class="id" title="var">rmult</span> (<span class="id" title="var">n</span> <span class="id" title="var">m</span> : <span class="id" title="var">val</span>)  : <span class="id" title="var">red_aexp</span> &lt;{ <span class="id" title="var">n</span> × <span class="id" title="var">m</span> }&gt; &lt;{ <span class="id" title="var">aop_sem</span> <span class="id" title="var">op_mult</span> <span class="id" title="var">n</span> <span class="id" title="var">m</span> }&gt;<br/>
+&nbsp;&nbsp;| <span class="id" title="var">minus_inv</span> <span class="id" title="var">e</span>        : <span class="id" title="var">red_aexp</span> &lt;{ <span class="id" title="var">e</span> - <span class="id" title="var">e</span> }&gt; &lt;{ 0 }&gt;<br/>
+&nbsp;&nbsp;| <span class="id" title="var">mult_zero</span> <span class="id" title="var">e</span>        : <span class="id" title="var">red_aexp</span> &lt;{ 0 × <span class="id" title="var">e</span> }&gt; &lt;{ 0 }&gt;<br/>
+&nbsp;&nbsp;| <span class="id" title="var">mult_one</span>  <span class="id" title="var">e</span>        : <span class="id" title="var">red_aexp</span> &lt;{ 1 × <span class="id" title="var">e</span> }&gt; &lt;{ <span class="id" title="var">e</span> }&gt;<br/>
+&nbsp;&nbsp;| <span class="id" title="var">plus_zero</span> <span class="id" title="var">a</span>        : <span class="id" title="var">red_aexp</span> &lt;{ 0 + <span class="id" title="var">a</span> }&gt; &lt;{ <span class="id" title="var">a</span> }&gt;<br/>
+&nbsp;&nbsp;| <span class="id" title="var">plus_comm</span> <span class="id" title="var">a<sub>1</sub></span> <span class="id" title="var">a<sub>2</sub></span>    : <span class="id" title="var">red_aexp</span> &lt;{ <span class="id" title="var">a<sub>1</sub></span> + <span class="id" title="var">a<sub>2</sub></span> }&gt; &lt;{ <span class="id" title="var">a<sub>2</sub></span> + <span class="id" title="var">a<sub>1</sub></span> }&gt;<br/>
+&nbsp;&nbsp;| <span class="id" title="var">mult_comm</span> <span class="id" title="var">a<sub>1</sub></span> <span class="id" title="var">a<sub>2</sub></span>    : <span class="id" title="var">red_aexp</span> &lt;{ <span class="id" title="var">a<sub>1</sub></span> × <span class="id" title="var">a<sub>2</sub></span> }&gt; &lt;{ <span class="id" title="var">a<sub>2</sub></span> × <span class="id" title="var">a<sub>1</sub></span> }&gt;<br/>
+.<br/>
+</div>
+
+<div class="doc">
+<a id="lab288"></a><h3 class="section">Rules on boolean expressions</h3>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Variant</span> <span class="id" title="var">red_bexp</span> : <span class="id" title="var">rel</span> <span class="id" title="var">bexp</span> :=<br/>
+&nbsp;&nbsp;| <span class="id" title="var">req</span> (<span class="id" title="var">n</span> <span class="id" title="var">m</span> : <span class="id" title="var">nat</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">red_bexp</span> &lt;{  <span class="id" title="var">n</span> = <span class="id" title="var">m</span> }&gt; (<span class="id" title="keyword">if</span> <span class="id" title="var">Nat.eqb</span> <span class="id" title="var">n</span> <span class="id" title="var">m</span> <span class="id" title="keyword">then</span> &lt;{<span class="id" title="var">true</span>}&gt; <span class="id" title="keyword">else</span> &lt;{<span class="id" title="var">false</span>}&gt;)<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id" title="var">rneq</span> (<span class="id" title="var">n</span> <span class="id" title="var">m</span> : <span class="id" title="var">nat</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">red_bexp</span> &lt;{ <span class="id" title="var">n</span> ≠ <span class="id" title="var">m</span> }&gt; (<span class="id" title="keyword">if</span> <span class="id" title="var">Nat.eqb</span> <span class="id" title="var">n</span> <span class="id" title="var">m</span> <span class="id" title="keyword">then</span> &lt;{<span class="id" title="var">false</span>}&gt; <span class="id" title="keyword">else</span> &lt;{<span class="id" title="var">true</span>}&gt;)<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id" title="var">rle</span> (<span class="id" title="var">n</span> <span class="id" title="var">m</span> : <span class="id" title="var">nat</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">red_bexp</span> &lt;{ <span class="id" title="var">n</span> ≤ <span class="id" title="var">m</span> }&gt; (<span class="id" title="keyword">if</span> <span class="id" title="var">Nat.leb</span> <span class="id" title="var">n</span> <span class="id" title="var">m</span> <span class="id" title="keyword">then</span> &lt;{<span class="id" title="var">true</span>}&gt; <span class="id" title="keyword">else</span> &lt;{<span class="id" title="var">false</span>}&gt;)<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id" title="var">rgt</span> (<span class="id" title="var">n</span> <span class="id" title="var">m</span> : <span class="id" title="var">nat</span>)  :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">red_bexp</span> &lt;{ <span class="id" title="var">n</span> &gt; <span class="id" title="var">m</span> }&gt; (<span class="id" title="keyword">if</span> <span class="id" title="var">Nat.leb</span> <span class="id" title="var">n</span> <span class="id" title="var">m</span> <span class="id" title="keyword">then</span> &lt;{<span class="id" title="var">false</span>}&gt; <span class="id" title="keyword">else</span> &lt;{<span class="id" title="var">true</span>}&gt;)<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id" title="var">rnegt</span>    : <span class="id" title="var">red_bexp</span> &lt;{ ¬<span class="id" title="var">true</span> }&gt; &lt;{<span class="id" title="var">false</span>}&gt;<br/>
+&nbsp;&nbsp;| <span class="id" title="var">rnegf</span>    : <span class="id" title="var">red_bexp</span> &lt;{ ¬<span class="id" title="var">false</span> }&gt; &lt;{<span class="id" title="var">true</span>}&gt;<br/>
+&nbsp;&nbsp;| <span class="id" title="var">randtt</span>   : <span class="id" title="var">red_bexp</span> &lt;{ <span class="id" title="var">true</span> &amp;&amp; <span class="id" title="var">true</span> }&gt; &lt;{ <span class="id" title="var">true</span>}&gt;<br/>
+&nbsp;&nbsp;| <span class="id" title="var">randft</span>   : <span class="id" title="var">red_bexp</span> &lt;{ <span class="id" title="var">false</span> &amp;&amp; <span class="id" title="var">true</span> }&gt; &lt;{ <span class="id" title="var">false</span> }&gt;<br/>
+&nbsp;&nbsp;| <span class="id" title="var">randff</span>   : <span class="id" title="var">red_bexp</span> &lt;{ <span class="id" title="var">false</span> &amp;&amp; <span class="id" title="var">false</span> }&gt; &lt;{ <span class="id" title="var">false</span> }&gt;<br/>
+&nbsp;&nbsp;| <span class="id" title="var">and_comm</span> <span class="id" title="var">b</span> <span class="id" title="var">b'</span> : <span class="id" title="var">red_bexp</span> &lt;{ <span class="id" title="var">b</span> &amp;&amp; <span class="id" title="var">b'</span> }&gt; &lt;{ <span class="id" title="var">b'</span> &amp;&amp; <span class="id" title="var">b</span> }&gt;<br/>
+.<br/>
+</div>
+
+<div class="doc">
+<a id="lab289"></a><h3 class="section">Rules on commands (1)</h3>
+
+<div class="paragraph"> </div>
+
+ These are straight-up validated by ≡ (strong equivalence 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Variant</span> <span class="id" title="var">red_com1</span>   : <span class="id" title="var">rel</span> <span class="id" title="var">com</span> :=<br/>
+| <span class="id" title="var">skipL</span> <span class="id" title="var">c</span>          : <span class="id" title="var">red_com1</span> &lt;{ <span class="id" title="var">skip</span> ; <span class="id" title="var">c</span> }&gt; &lt;{<span class="id" title="var">c</span>}&gt;<br/>
+| <span class="id" title="var">skipR</span> <span class="id" title="var">c</span>          : <span class="id" title="var">red_com1</span> &lt;{ <span class="id" title="var">c</span> ; <span class="id" title="var">skip</span> }&gt; &lt;{<span class="id" title="var">c</span>}&gt;<br/>
+| <span class="id" title="var">iftrue</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="var">c<sub>2</sub></span>     : <span class="id" title="var">red_com1</span> &lt;{ <span class="id" title="keyword">if</span> <span class="id" title="var">true</span> <span class="id" title="keyword">then</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="keyword">else</span> <span class="id" title="var">c<sub>2</sub></span> <span class="id" title="keyword">end</span> }&gt; <span class="id" title="var">c<sub>1</sub></span><br/>
+| <span class="id" title="var">iffalse</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="var">c<sub>2</sub></span>    : <span class="id" title="var">red_com1</span> &lt;{ <span class="id" title="keyword">if</span> <span class="id" title="var">false</span> <span class="id" title="keyword">then</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="keyword">else</span> <span class="id" title="var">c<sub>2</sub></span> <span class="id" title="keyword">end</span> }&gt; <span class="id" title="var">c<sub>2</sub></span><br/>
+| <span class="id" title="var">whilefalse</span> <span class="id" title="var">c</span>     : <span class="id" title="var">red_com1</span> &lt;{ <span class="id" title="var">while</span> <span class="id" title="var">false</span> <span class="id" title="tactic">do</span> <span class="id" title="var">c</span> <span class="id" title="keyword">end</span> }&gt; &lt;{ <span class="id" title="var">skip</span> }&gt;<br/>
+| <span class="id" title="var">seqA</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="var">c<sub>2</sub></span> <span class="id" title="var">c<sub>3</sub></span>    : <span class="id" title="var">red_com1</span> &lt;{ (<span class="id" title="var">c<sub>1</sub></span> ; <span class="id" title="var">c<sub>2</sub></span>) ; <span class="id" title="var">c<sub>3</sub></span> }&gt; &lt;{ <span class="id" title="var">c<sub>1</sub></span> ; (<span class="id" title="var">c<sub>2</sub></span> ; <span class="id" title="var">c<sub>3</sub></span>) }&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+| <span class="id" title="var">ifComm</span> <span class="id" title="var">b</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="var">c<sub>2</sub></span>   : <span class="id" title="var">red_com1</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="keyword">if</span> <span class="id" title="var">b</span> <span class="id" title="keyword">then</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="keyword">else</span> <span class="id" title="var">c<sub>2</sub></span> <span class="id" title="keyword">end</span> }&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="keyword">if</span> ¬<span class="id" title="var">b</span> <span class="id" title="keyword">then</span> <span class="id" title="var">c<sub>2</sub></span> <span class="id" title="keyword">else</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="keyword">end</span> }&gt;<br/>
+<br/>
+| <span class="id" title="var">ifDist</span> <span class="id" title="var">b</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="var">c<sub>2</sub></span> <span class="id" title="var">c</span> : <span class="id" title="var">red_com1</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="keyword">if</span> <span class="id" title="var">b</span> <span class="id" title="keyword">then</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="keyword">else</span> <span class="id" title="var">c<sub>2</sub></span> <span class="id" title="keyword">end</span> ; <span class="id" title="var">c</span> }&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="keyword">if</span> <span class="id" title="var">b</span> <span class="id" title="keyword">then</span> <span class="id" title="var">c<sub>1</sub></span> ; <span class="id" title="var">c</span> <span class="id" title="keyword">else</span> <span class="id" title="var">c<sub>2</sub></span> ; <span class="id" title="var">c</span> <span class="id" title="keyword">end</span> }&gt;<br/>
+<br/>
+| <span class="id" title="var">loop_unroll1</span> <span class="id" title="var">b</span> <span class="id" title="var">c</span> : <span class="id" title="var">red_com1</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="var">while</span> <span class="id" title="var">b</span> <span class="id" title="tactic">do</span> <span class="id" title="var">c</span> <span class="id" title="keyword">end</span> }&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="keyword">if</span> <span class="id" title="var">b</span> <span class="id" title="keyword">then</span> <span class="id" title="var">c</span> ; <span class="id" title="var">while</span> <span class="id" title="var">b</span> <span class="id" title="tactic">do</span> <span class="id" title="var">c</span> <span class="id" title="keyword">end</span> <span class="id" title="keyword">else</span> <span class="id" title="var">skip</span> <span class="id" title="keyword">end</span> }&gt;.<br/>
+</div>
+
+<div class="doc">
+<a id="lab290"></a><h3 class="section">Rules on commands (2)</h3>
+
+<div class="paragraph"> </div>
+
+ Rules on commands that are validated only by ≊ (weak equivalence) 
+</div>
+<div class="code">
+<span class="id" title="keyword">Variant</span> <span class="id" title="var">red_com2</span> : <span class="id" title="var">com</span> → <span class="id" title="var">com</span> → <span class="id" title="keyword">Prop</span> :=<br/>
+| <span class="id" title="var">whiletrue</span> <span class="id" title="var">c</span>      : <span class="id" title="var">red_com2</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="var">while</span> <span class="id" title="var">true</span> <span class="id" title="tactic">do</span> <span class="id" title="var">c</span> <span class="id" title="keyword">end</span> }&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="var">while</span> <span class="id" title="var">true</span> <span class="id" title="tactic">do</span> <span class="id" title="var">skip</span> <span class="id" title="keyword">end</span> }&gt;<br/>
+<br/>
+| <span class="id" title="var">loop_unroll2</span> <span class="id" title="var">b</span> <span class="id" title="var">c</span> : <span class="id" title="var">red_com2</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="var">while</span> <span class="id" title="var">b</span> <span class="id" title="tactic">do</span> <span class="id" title="var">c</span> <span class="id" title="keyword">end</span> }&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="var">while</span> <span class="id" title="var">b</span> <span class="id" title="tactic">do</span> <span class="id" title="var">c</span> ; <span class="id" title="keyword">if</span> <span class="id" title="var">b</span> <span class="id" title="keyword">then</span> <span class="id" title="var">c</span> <span class="id" title="keyword">else</span> <span class="id" title="var">skip</span> <span class="id" title="keyword">end</span> <span class="id" title="keyword">end</span> }&gt;.<br/>
+</div>
+
+<div class="doc">
+<a id="lab291"></a><h2 class="section">Semantic validity of our calculus</h2>
+
+<div class="paragraph"> </div>
+
+ For each equivalence, we justify the correctness by proving a lemma. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">minus_inv_sound</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">e</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="var">e</span> - <span class="id" title="var">e</span> }&gt; ≈ₐ 0.<br/>
+<div class="togglescript" id="proofcontrol5" onclick="toggleDisplay('proof5');toggleDisplay('proofcontrol5')"><span class="show"></span></div>
+<div class="proofscript" id="proof5" onclick="toggleDisplay('proof5');toggleDisplay('proofcontrol5')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">e</span> σ.<br/>
+&nbsp;&nbsp;<span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> <span class="id" title="var">aexp_pure</span> <span class="id" title="var">e</span> σ <span class="id" title="keyword">as</span> [<span class="id" title="var">v</span> <span class="id" title="var">EQ</span>]. <span class="comment">(*&nbsp;Note&nbsp;that&nbsp;if&nbsp;<span class="inlinecode"><span class="id" title="var">e</span></span>&nbsp;was&nbsp;impure&nbsp;(if&nbsp;it&nbsp;diverged&nbsp;for&nbsp;instance),&nbsp;then&nbsp;the&nbsp;equation&nbsp;would&nbsp;be&nbsp;invalid&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">EQ</span>; <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">EQ</span>; <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">PeanoNat.Nat.sub_diag</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">mult_zero_sound</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">e</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ 0 × <span class="id" title="var">e</span> }&gt; ≈ₐ 0.<br/>
+<div class="togglescript" id="proofcontrol6" onclick="toggleDisplay('proof6');toggleDisplay('proofcontrol6')"><span class="show"></span></div>
+<div class="proofscript" id="proof6" onclick="toggleDisplay('proof6');toggleDisplay('proofcontrol6')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">e</span> σ.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">aexp_pure_aeval</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+
+<div class="doc">
+<a id="lab292"></a><h3 class="section">Proofs of equivalences of commands</h3>
+
+<div class="paragraph"> </div>
+
+ And we can prove interesting semantic equivalenes of Imp programs.  
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">skipL_sound</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">c</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="var">skip</span> ; <span class="id" title="var">c</span> }&gt; ≡<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;{<span class="id" title="var">c</span>}&gt;.<br/>
+<div class="togglescript" id="proofcontrol7" onclick="toggleDisplay('proof7');toggleDisplay('proofcontrol7')"><span class="show"></span></div>
+<div class="proofscript" id="proof7" onclick="toggleDisplay('proof7');toggleDisplay('proofcontrol7')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>; <span class="id" title="tactic">red</span>; <span class="id" title="var">cbn</span>; <span class="id" title="var">now</span> <span class="id" title="var">norm</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+
+<div class="doc">
+<a id="lab293"></a><h3 class="section">(Harder) Loop Equivalences</h3>
+
+<div class="paragraph"> </div>
+
+ This equivalence is <i>not</i> directly provable from the iter laws. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">loop_unroll2_sound</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">b</span> <span class="id" title="var">c</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="var">while</span> <span class="id" title="var">b</span> <span class="id" title="tactic">do</span> <span class="id" title="var">c</span> <span class="id" title="keyword">end</span> }&gt; ≊<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="var">while</span> <span class="id" title="var">b</span> <span class="id" title="tactic">do</span> (<span class="id" title="var">c</span> ; <span class="id" title="keyword">if</span> <span class="id" title="var">b</span> <span class="id" title="keyword">then</span> <span class="id" title="var">c</span> <span class="id" title="keyword">else</span> <span class="id" title="var">skip</span> <span class="id" title="keyword">end</span>) <span class="id" title="keyword">end</span> }&gt;.<br/>
+<div class="togglescript" id="proofcontrol10" onclick="toggleDisplay('proof10');toggleDisplay('proofcontrol10')"><span class="show"></span></div>
+<div class="proofscript" id="proof10" onclick="toggleDisplay('proof10');toggleDisplay('proofcontrol10')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">red</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">einit</span>. <span class="id" title="var">ecofix</span> <span class="id" title="var">CIH</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> σ.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <span class="id" title="var">model_com</span>,<span class="id" title="var">compose</span>; <span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> 2 <span class="id" title="var">interp_state_repeat</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> 2 <span class="id" title="var">unfold_repeat_state</span>.<br/><hr class='doublespaceincode'/>
+&nbsp;<span class="comment">(*&nbsp;The&nbsp;system&nbsp;can&nbsp;synch&nbsp;in&nbsp;three&nbsp;ways<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(1)&nbsp;<span class="inlinecode"><span class="id" title="var">b</span></span>&nbsp;is&nbsp;immediately&nbsp;false,&nbsp;it&nbsp;exits&nbsp;on&nbsp;both&nbsp;side&nbsp;immediately<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(2)&nbsp;<span class="inlinecode"><span class="id" title="var">b</span></span>&nbsp;is&nbsp;first&nbsp;true,&nbsp;then&nbsp;false,&nbsp;it&nbsp;exits&nbsp;on&nbsp;both&nbsp;side&nbsp;after&nbsp;one&nbsp;iteration<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;However&nbsp;there&nbsp;is&nbsp;one&nbsp;tricky&nbsp;part&nbsp;to&nbsp;this:&nbsp;on&nbsp;the&nbsp;right&nbsp;hand-side,&nbsp;the<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;failing&nbsp;<span class="inlinecode"><span class="id" title="var">b</span></span>&nbsp;expression&nbsp;will&nbsp;be&nbsp;evaluated&nbsp;twice&nbsp;in&nbsp;a&nbsp;row,&nbsp;we&nbsp;need&nbsp;to<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;remember&nbsp;that&nbsp;it&nbsp;was&nbsp;evaluating&nbsp;to&nbsp;false.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Furthermore,&nbsp;since&nbsp;we&nbsp;evaluate&nbsp;b&nbsp;twice,&nbsp;it's&nbsp;only&nbsp;sound&nbsp;if&nbsp;b&nbsp;is&nbsp;pure,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;which&nbsp;it&nbsp;isn't&nbsp;at&nbsp;this&nbsp;level:&nbsp;we&nbsp;need&nbsp;to&nbsp;move&nbsp;this&nbsp;in&nbsp;opt_red2!<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(3)&nbsp;<span class="inlinecode"><span class="id" title="var">b</span></span>&nbsp;is&nbsp;true&nbsp;at&nbsp;least&nbsp;twice,&nbsp;both&nbsp;system&nbsp;synch&nbsp;under&nbsp;a&nbsp;Tau,&nbsp;and&nbsp;conclude&nbsp;coinductively&nbsp;(the&nbsp;system&nbsp;on&nbsp;the&nbsp;left&nbsp;has&nbsp;dismissed&nbsp;a&nbsp;first&nbsp;tau&nbsp;earlier)<br/>
+&nbsp;&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">ebind</span>; <span class="id" title="tactic">econstructor</span>. <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">tmp</span> ? &lt;-; <span class="id" title="tactic">destruct</span> <span class="id" title="var">tmp</span> <span class="id" title="keyword">as</span> [? []]; <span class="id" title="var">cycle</span> -1.<br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;(1)&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">cbn</span>. <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ebind</span>. <span class="id" title="tactic">econstructor</span>. <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> ? ? &lt;-; <span class="id" title="var">break</span>; <span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">tau_euttge</span>. <span class="comment">(*&nbsp;The&nbsp;system&nbsp;on&nbsp;the&nbsp;left&nbsp;passes&nbsp;a&nbsp;lonely&nbsp;guard&nbsp;after&nbsp;one&nbsp;iteration,&nbsp;we&nbsp;dismiss&nbsp;it&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">unfold_repeat_state</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;There&nbsp;is&nbsp;something&nbsp;slightly&nbsp;interesting&nbsp;here:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;what&nbsp;is&nbsp;the&nbsp;best&nbsp;way&nbsp;to&nbsp;exploit&nbsp;the&nbsp;purity&nbsp;of&nbsp;<span class="inlinecode"><span class="id" title="var">b</span></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;so&nbsp;that&nbsp;we&nbsp;can&nbsp;process&nbsp;its&nbsp;second&nbsp;evaluation&nbsp;in&nbsp;the<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;right&nbsp;hand-side?<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> <span class="id" title="var">bexp_pure</span> <span class="id" title="var">b</span> <span class="id" title="var">m<sub>0</sub></span> <span class="id" title="keyword">as</span> [<span class="id" title="var">vb</span> <span class="id" title="var">eqb</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ebind</span>. <span class="id" title="var">unshelve</span> <span class="id" title="tactic">econstructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">exact</span> (<span class="id" title="keyword">fun</span> '(<span class="id" title="var">m<sub>1</sub></span>,<span class="id" title="var">b<sub>1</sub></span>) '(<span class="id" title="var">m<sub>2</sub></span>,<span class="id" title="var">b<sub>2</sub></span>) ⇒ <span class="id" title="var">m<sub>1</sub></span> = <span class="id" title="var">m<sub>2</sub></span> ∧ <span class="id" title="var">m<sub>1</sub></span> = <span class="id" title="var">m<sub>0</sub></span> ∧ <span class="id" title="var">b<sub>1</sub></span> = <span class="id" title="var">b<sub>2</sub></span> ∧ <span class="id" title="var">b<sub>1</sub></span> = <span class="id" title="var">vb</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">eqb</span>; <span class="id" title="var">ret</span>; <span class="id" title="tactic">intuition</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> [? ?] [? ?] ?; <span class="id" title="tactic">intuition</span>; <span class="id" title="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">vb</span>; <span class="id" title="var">cbn</span>; <span class="id" title="var">cycle</span> -1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="comment">(*&nbsp;(2)&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cbn</span>; <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">tau_euttge</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">unfold_repeat_state</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> (@<span class="id" title="var">bind_ret_l</span> <span class="id" title="var">void1</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> (<span class="id" title="var">m<sub>0</sub></span>,<span class="id" title="var">false</span>) (<span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> ⇒ <span class="id" title="var">Ret</span> (<span class="id" title="var">m<sub>0</sub></span>,<span class="id" title="var">tt</span>))) <span class="id" title="keyword">as</span> <span class="id" title="var">EQ</span>; <span class="id" title="var">cbn</span> <span class="id" title="keyword">in</span> <span class="id" title="var">EQ</span>; <span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">EQ</span>; <span class="id" title="tactic">clear</span> <span class="id" title="var">EQ</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ebind</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unshelve</span> <span class="id" title="tactic">econstructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">exact</span> (<span class="id" title="keyword">fun</span> '(<span class="id" title="var">m<sub>1</sub></span>,<span class="id" title="var">b<sub>1</sub></span>) '(<span class="id" title="var">m<sub>2</sub></span>,<span class="id" title="var">b<sub>2</sub></span>) ⇒ <span class="id" title="var">m<sub>1</sub></span> = <span class="id" title="var">m<sub>2</sub></span> ∧ <span class="id" title="var">m<sub>1</sub></span> = <span class="id" title="var">m<sub>0</sub></span> ∧ <span class="id" title="var">b<sub>1</sub></span> = <span class="id" title="var">b<sub>2</sub></span> ∧ <span class="id" title="var">b<sub>1</sub></span> = <span class="id" title="var">false</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">eqb</span>; <span class="id" title="var">ret</span>; <span class="id" title="tactic">intuition</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> [? ?] [? ?] ?; <span class="id" title="tactic">intuition</span>; <span class="id" title="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="var">cbn</span>; <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="var">cbn</span>; <span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ebind</span>. <span class="id" title="tactic">econstructor</span>. <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> ? ? &lt;-; <span class="id" title="var">break</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">norm</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- 2 <span class="id" title="var">interp_state_repeat</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">etau</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">whiletrue_sound</span> <span class="id" title="var">c</span> :<br/>
+&nbsp;&nbsp;&lt;{ <span class="id" title="var">while</span> <span class="id" title="var">true</span> <span class="id" title="tactic">do</span> <span class="id" title="var">c</span> <span class="id" title="keyword">end</span> }&gt; ≊<br/>
+&nbsp;&nbsp;&lt;{ <span class="id" title="var">while</span> <span class="id" title="var">true</span> <span class="id" title="tactic">do</span> <span class="id" title="var">skip</span> <span class="id" title="keyword">end</span>}&gt;.<br/>
+<div class="togglescript" id="proofcontrol11" onclick="toggleDisplay('proof11');toggleDisplay('proofcontrol11')"><span class="show"></span></div>
+<div class="proofscript" id="proof11" onclick="toggleDisplay('proof11');toggleDisplay('proofcontrol11')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> σ.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <span class="id" title="var">model_com</span>, <span class="id" title="var">compose</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">while_true_skip_spin</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">loop_unroll1_strong</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">interp_state_bind</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">setoid_rewrite</span> <span class="id" title="var">interp_state_tau</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">whiletrue_sound_aux</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+
+<div class="doc">
+<a id="lab294"></a><h2 class="section">A sound static calculus</h2>
+
+<div class="paragraph"> </div>
+
+ The elementary soundness lemmas characterizes that each set of reduction
+    rule is a subrelation of the corresponding semantic equivalence.
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">red_aexp_sound</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">a<sub>1</sub></span> <span class="id" title="var">a<sub>2</sub></span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">red_aexp</span> <span class="id" title="var">a<sub>1</sub></span> <span class="id" title="var">a<sub>2</sub></span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">a<sub>1</sub></span> ≈ₐ <span class="id" title="var">a<sub>2</sub></span>.<br/>
+<div class="togglescript" id="proofcontrol12" onclick="toggleDisplay('proof12');toggleDisplay('proofcontrol12')"><span class="show"></span></div>
+<div class="proofscript" id="proof12" onclick="toggleDisplay('proof12');toggleDisplay('proofcontrol12')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> × <span class="id" title="var">RED</span>; <span class="id" title="tactic">inversion</span> <span class="id" title="var">RED</span>; <span class="id" title="tactic">subst</span>; <span class="id" title="tactic">eauto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">opt</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">red_bexp_sound</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">b<sub>1</sub></span> <span class="id" title="var">b<sub>2</sub></span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">red_bexp</span> <span class="id" title="var">b<sub>1</sub></span> <span class="id" title="var">b<sub>2</sub></span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">b<sub>1</sub></span> ≈ᵦ <span class="id" title="var">b<sub>2</sub></span>.<br/>
+<div class="togglescript" id="proofcontrol13" onclick="toggleDisplay('proof13');toggleDisplay('proofcontrol13')"><span class="show"></span></div>
+<div class="proofscript" id="proof13" onclick="toggleDisplay('proof13');toggleDisplay('proofcontrol13')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> × <span class="id" title="var">RED</span>; <span class="id" title="tactic">inversion</span> <span class="id" title="var">RED</span>; <span class="id" title="tactic">subst</span>; <span class="id" title="tactic">eauto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">opt</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">red_com1_sound</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="var">c<sub>2</sub></span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">red_com1</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="var">c<sub>2</sub></span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">c<sub>1</sub></span> ≡ <span class="id" title="var">c<sub>2</sub></span>.<br/>
+<div class="togglescript" id="proofcontrol14" onclick="toggleDisplay('proof14');toggleDisplay('proofcontrol14')"><span class="show"></span></div>
+<div class="proofscript" id="proof14" onclick="toggleDisplay('proof14');toggleDisplay('proofcontrol14')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> × <span class="id" title="var">RED</span>; <span class="id" title="tactic">inversion</span> <span class="id" title="var">RED</span>; <span class="id" title="tactic">subst</span>; <span class="id" title="tactic">eauto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">opt</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<br/>
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">red_com2_sound</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="var">c<sub>2</sub></span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">red_com2</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="var">c<sub>2</sub></span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">c<sub>1</sub></span> ≊ <span class="id" title="var">c<sub>2</sub></span>.<br/>
+<div class="togglescript" id="proofcontrol15" onclick="toggleDisplay('proof15');toggleDisplay('proofcontrol15')"><span class="show"></span></div>
+<div class="proofscript" id="proof15" onclick="toggleDisplay('proof15');toggleDisplay('proofcontrol15')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> × <span class="id" title="var">RED</span>; <span class="id" title="tactic">inversion</span> <span class="id" title="var">RED</span>; <span class="id" title="tactic">subst</span>; <span class="id" title="tactic">eauto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">opt</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<br/><hr class='doublespaceincode'/>
+</div>
+
+<div class="doc">
+<a id="lab296"></a><h2 class="section">Proving program equivalences</h2>
+
+<div class="paragraph"> </div>
+
+ We can use our static calculus to prove program equivalences.
+ 
+<div class="paragraph"> </div>
+
+ Note what happens to justify this rewrite:
+<ul class="doclist">
+<li>  red_aexp is a subrelation to ≈ₐ
+
+</li>
+<li>  ≈ₐ is compatible with <span class="inlinecode"><span class="id" title="var">Asgn</span></span> <span class="inlinecode"><span class="id" title="var">x</span></span>, leading to a ≈ relation
+
+</li>
+<li>  ≈ is a congruence, hence being lifted to all the surrounding contexts
+
+</li>
+<li>  ≈ is transitive, hence allowing the rewrite of the substituted program
+
+</li>
+</ul>
+   
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <span class="id" title="var">congruence_example</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;Program&nbsp;1:&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="var">X</span> := 0;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> (<span class="id" title="var">X</span> = 0)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Y</span> := 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Y</span> := 42<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span> }&gt; ≊<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;Program&nbsp;2:&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="var">X</span> := 0;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> (<span class="id" title="var">X</span> = 0)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Y</span> := <span class="id" title="var">X</span> - <span class="id" title="var">X</span> <span class="comment">(*&nbsp;&lt;---&nbsp;Changed&nbsp;here&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Y</span> := 42<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span> }&gt;.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">minus_inv</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab297"></a><h2 class="section">Constant folding as a tactic</h2>
+
+<div class="paragraph"> </div>
+
+ Our set of rules can be used to define "proof-level optimizations".
+    We can "run" constant folding in proofs of equivalences
+    by picking out a set of rewrite rules to use.
+ 
+</div>
+<div class="code">
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Rewrite</span><br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;these&nbsp;compute&nbsp;variable-free&nbsp;aexps:&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">rplus</span> <span class="id" title="var">rminus</span> <span class="id" title="var">rmult</span> <span class="id" title="var">PeanoNat.Nat.eqb_refl</span><br/>
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;these&nbsp;compute&nbsp;variable-free&nbsp;bexps:&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">req</span> <span class="id" title="var">rle</span> <span class="id" title="var">randft</span> <span class="id" title="var">randtt</span> <span class="id" title="var">randff</span> <span class="id" title="var">rnegt</span> <span class="id" title="var">rnegf</span><br/>
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;these&nbsp;collapse&nbsp;trivial&nbsp;control&nbsp;flow:&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">iftrue</span> <span class="id" title="var">iffalse</span> <span class="id" title="var">whiletrue</span> <span class="id" title="var">whilefalse</span> <br/>
+&nbsp;&nbsp;: <span class="id" title="var">cst_folding</span>.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">cst_fold</span> := <span class="id" title="tactic">autorewrite</span> <span class="id" title="keyword">with</span> <span class="id" title="var">cst_folding</span>; <span class="id" title="var">cbn</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab298"></a><h3 class="section">Example</h3>
+ And we can run it in proofs to simplify programs  Examples from plf 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <span class="id" title="var">fold_aexp_ex<sub>1</sub></span> :<br/>
+&nbsp;&nbsp;&lt;{ (1 + 2) × <span class="id" title="var">X</span> }&gt; ≈ₐ &lt;{ 3 × <span class="id" title="var">X</span> }&gt;.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">cst_fold</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/><hr class='doublespaceincode'/>
+</div>
+
+<div class="doc">
+<a id="lab299"></a><h3 class="section">More interesting example</h3>
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Example</span> <span class="id" title="var">fold_com_ex<sub>1</sub></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;Original&nbsp;program:&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="var">X</span> := 4 + 5;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Y</span> := <span class="id" title="var">X</span> - 3;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> ((<span class="id" title="var">X</span> - <span class="id" title="var">Y</span>) = (2 + 4)) <span class="id" title="keyword">then</span> <span class="id" title="var">skip</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">Y</span> := 0 <span class="id" title="keyword">end</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> (0 ≤ (4 - (2 + 1))) <span class="id" title="keyword">then</span> <span class="id" title="var">Y</span> := 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">skip</span> <span class="id" title="keyword">end</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">while</span> (<span class="id" title="var">Y</span> = 0) <span class="id" title="tactic">do</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">X</span> := <span class="id" title="var">X</span> + 1<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span> }&gt;<br/>
+&nbsp;&nbsp;≊ <span class="comment">(*&nbsp;After&nbsp;constant&nbsp;folding:&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="var">X</span> := 9;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Y</span> := <span class="id" title="var">X</span> - 3;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> ((<span class="id" title="var">X</span> - <span class="id" title="var">Y</span>) = 6) <span class="id" title="keyword">then</span> <span class="id" title="var">skip</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">Y</span> := 0 <span class="id" title="keyword">end</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Y</span> := 0;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">while</span> (<span class="id" title="var">Y</span> = 0) <span class="id" title="tactic">do</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">X</span> := <span class="id" title="var">X</span> + 1<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span> }&gt;.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">cst_fold</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab300"></a><h2 class="section">Constant folding as a sound optimization</h2>
+
+<div class="paragraph"> </div>
+
+ We can implement a transformation on Imp syntax and
+  verify that it is a <i>correct</i> optimization.
+ 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Fixpoint</span> <span class="id" title="var">fold_constants_aexp</span> (<span class="id" title="var">a</span> : <span class="id" title="var">aexp</span>) : <span class="id" title="var">aexp</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">a</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">ANum</span> <span class="id" title="var">n</span> ⇒ <span class="id" title="var">ANum</span> <span class="id" title="var">n</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">AId</span> <span class="id" title="var">x</span> ⇒ <span class="id" title="var">AId</span> <span class="id" title="var">x</span><br/>
+<br/>
+&nbsp;&nbsp;| <span class="id" title="var">APlus</span> <span class="id" title="var">a<sub>1</sub></span> <span class="id" title="var">a<sub>2</sub></span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> (<span class="id" title="var">fold_constants_aexp</span> <span class="id" title="var">a<sub>1</sub></span>, <span class="id" title="var">fold_constants_aexp</span> <span class="id" title="var">a<sub>2</sub></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| (<span class="id" title="var">ANum</span> <span class="id" title="var">n<sub>1</sub></span>, <span class="id" title="var">ANum</span> <span class="id" title="var">n<sub>2</sub></span>) ⇒ <span class="id" title="var">ANum</span> (<span class="id" title="var">aop_sem</span> <span class="id" title="var">op_plus</span> <span class="id" title="var">n<sub>1</sub></span> <span class="id" title="var">n<sub>2</sub></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| (<span class="id" title="var">a<sub>1</sub>'</span>, <span class="id" title="var">a<sub>2</sub>'</span>) ⇒ &lt;{ <span class="id" title="var">APlus</span> <span class="id" title="var">a<sub>1</sub>'</span> <span class="id" title="var">a<sub>2</sub>'</span> }&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+<br/>
+&nbsp;&nbsp;| <span class="id" title="var">AMinus</span> <span class="id" title="var">a<sub>1</sub></span> <span class="id" title="var">a<sub>2</sub></span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> (<span class="id" title="var">fold_constants_aexp</span> <span class="id" title="var">a<sub>1</sub></span>, <span class="id" title="var">fold_constants_aexp</span> <span class="id" title="var">a<sub>2</sub></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| (<span class="id" title="var">ANum</span> <span class="id" title="var">n<sub>1</sub></span>, <span class="id" title="var">ANum</span> <span class="id" title="var">n<sub>2</sub></span>) ⇒ <span class="id" title="var">ANum</span> (<span class="id" title="var">aop_sem</span> <span class="id" title="var">op_minus</span> <span class="id" title="var">n<sub>1</sub></span> <span class="id" title="var">n<sub>2</sub></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| (<span class="id" title="var">a<sub>1</sub>'</span>, <span class="id" title="var">a<sub>2</sub>'</span>) ⇒ &lt;{ <span class="id" title="var">AMinus</span> <span class="id" title="var">a<sub>1</sub>'</span> <span class="id" title="var">a<sub>2</sub>'</span> }&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+<br/>
+&nbsp;&nbsp;| <span class="id" title="var">AMult</span> <span class="id" title="var">a<sub>1</sub></span> <span class="id" title="var">a<sub>2</sub></span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> (<span class="id" title="var">fold_constants_aexp</span> <span class="id" title="var">a<sub>1</sub></span>, <span class="id" title="var">fold_constants_aexp</span> <span class="id" title="var">a<sub>2</sub></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| (<span class="id" title="var">ANum</span> <span class="id" title="var">n<sub>1</sub></span>, <span class="id" title="var">ANum</span> <span class="id" title="var">n<sub>2</sub></span>) ⇒ <span class="id" title="var">ANum</span> (<span class="id" title="var">aop_sem</span> <span class="id" title="var">op_mult</span> <span class="id" title="var">n<sub>1</sub></span> <span class="id" title="var">n<sub>2</sub></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| (<span class="id" title="var">a<sub>1</sub>'</span>, <span class="id" title="var">a<sub>2</sub>'</span>) ⇒ &lt;{ <span class="id" title="var">AMult</span> <span class="id" title="var">a<sub>1</sub>'</span> <span class="id" title="var">a<sub>2</sub>'</span> }&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+
+<div class="doc">
+And its proof of correctness 
+</div>
+<div class="code">
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">fold_constants_aexp_sound</span> <span class="id" title="var">a</span> :<br/>
+&nbsp;&nbsp;<span class="id" title="var">fold_constants_aexp</span> <span class="id" title="var">a</span> ≈ₐ <span class="id" title="var">a</span>.<br/>
+<div class="togglescript" id="proofcontrol16" onclick="toggleDisplay('proof16');toggleDisplay('proofcontrol16')"><span class="show"></span></div>
+<div class="proofscript" id="proof16" onclick="toggleDisplay('proof16');toggleDisplay('proofcontrol16')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">a</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">IHa1</span>, &lt;- <span class="id" title="var">IHa2</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">reflexivity</span>; <span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;-<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">fold_constants_aexp</span> <span class="id" title="var">a<sub>1</sub></span>).<br/>
+&nbsp;&nbsp;2,3,4,5: <span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">IHa1</span>, <span class="id" title="var">IHa2</span>. <span class="comment">(*&nbsp;These&nbsp;rewrites&nbsp;rely&nbsp;on&nbsp;≈ₐ&nbsp;being&nbsp;a&nbsp;congruence&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">fold_constants_aexp</span> <span class="id" title="var">a<sub>2</sub></span>); <span class="id" title="tactic">try</span> <span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">IHa1</span>, &lt;- <span class="id" title="var">IHa2</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">rplus</span>. <span class="comment">(*&nbsp;The&nbsp;optimization&nbsp;in&nbsp;this&nbsp;case&nbsp;corresponds&nbsp;exactly&nbsp;to&nbsp;<span class="inlinecode"><span class="id" title="var">raop</span></span>&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/><hr class='doublespaceincode'/>
+&nbsp;&nbsp;-<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">fold_constants_aexp</span> <span class="id" title="var">a<sub>1</sub></span>).<br/>
+&nbsp;&nbsp;2,3,4,5: <span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">IHa1</span>, <span class="id" title="var">IHa2</span>. <span class="comment">(*&nbsp;These&nbsp;rewrites&nbsp;rely&nbsp;on&nbsp;≈ₐ&nbsp;being&nbsp;a&nbsp;congruence&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">fold_constants_aexp</span> <span class="id" title="var">a<sub>2</sub></span>); <span class="id" title="tactic">try</span> <span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">IHa1</span>, &lt;- <span class="id" title="var">IHa2</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">rminus</span>. <span class="comment">(*&nbsp;The&nbsp;optimization&nbsp;in&nbsp;this&nbsp;case&nbsp;corresponds&nbsp;exactly&nbsp;to&nbsp;<span class="inlinecode"><span class="id" title="var">raop</span></span>&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/><hr class='doublespaceincode'/>
+&nbsp;&nbsp;-<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">fold_constants_aexp</span> <span class="id" title="var">a<sub>1</sub></span>).<br/>
+&nbsp;&nbsp;2,3,4,5: <span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">IHa1</span>, <span class="id" title="var">IHa2</span>. <span class="comment">(*&nbsp;These&nbsp;rewrites&nbsp;rely&nbsp;on&nbsp;≈ₐ&nbsp;being&nbsp;a&nbsp;congruence&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">fold_constants_aexp</span> <span class="id" title="var">a<sub>2</sub></span>); <span class="id" title="tactic">try</span> <span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">IHa1</span>, &lt;- <span class="id" title="var">IHa2</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">rmult</span>. <span class="comment">(*&nbsp;The&nbsp;optimization&nbsp;in&nbsp;this&nbsp;case&nbsp;corresponds&nbsp;exactly&nbsp;to&nbsp;<span class="inlinecode"><span class="id" title="var">raop</span></span>&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+
+<div class="doc">
+<a id="lab301"></a><h3 class="section">Constant folding over commands</h3>
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Fixpoint</span> <span class="id" title="var">fold_constants_com</span> (<span class="id" title="var">c</span> : <span class="id" title="var">com</span>) : <span class="id" title="var">com</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">c</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| &lt;{ <span class="id" title="var">skip</span> }&gt; ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="var">skip</span> }&gt;<br/>
+&nbsp;&nbsp;| &lt;{ <span class="id" title="var">x</span> := <span class="id" title="var">a</span> }&gt; ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="var">x</span> := (<span class="id" title="var">fold_constants_aexp</span> <span class="id" title="var">a</span>) }&gt;<br/>
+&nbsp;&nbsp;| &lt;{ <span class="id" title="var">c<sub>1</sub></span> ; <span class="id" title="var">c<sub>2</sub></span> }&gt; ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="var">fold_constants_com</span> <span class="id" title="var">c<sub>1</sub></span> ; <span class="id" title="var">fold_constants_com</span> <span class="id" title="var">c<sub>2</sub></span> }&gt;<br/>
+&nbsp;&nbsp;| &lt;{ <span class="id" title="keyword">if</span> <span class="id" title="var">b</span> <span class="id" title="keyword">then</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="keyword">else</span> <span class="id" title="var">c<sub>2</sub></span> <span class="id" title="keyword">end</span> }&gt; ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">fold_constants_bexp</span> <span class="id" title="var">b</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| &lt;{<span class="id" title="var">true</span>}&gt; ⇒ <span class="id" title="var">fold_constants_com</span> <span class="id" title="var">c<sub>1</sub></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| &lt;{<span class="id" title="var">false</span>}&gt; ⇒ <span class="id" title="var">fold_constants_com</span> <span class="id" title="var">c<sub>2</sub></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">b'</span> ⇒ &lt;{ <span class="id" title="keyword">if</span> <span class="id" title="var">b'</span> <span class="id" title="keyword">then</span> <span class="id" title="var">fold_constants_com</span> <span class="id" title="var">c<sub>1</sub></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">fold_constants_com</span> <span class="id" title="var">c<sub>2</sub></span> <span class="id" title="keyword">end</span>}&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;| &lt;{ <span class="id" title="var">while</span> <span class="id" title="var">b</span> <span class="id" title="tactic">do</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="keyword">end</span> }&gt; ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">fold_constants_bexp</span> <span class="id" title="var">b</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| &lt;{<span class="id" title="var">true</span>}&gt; ⇒ &lt;{ <span class="id" title="var">while</span> <span class="id" title="var">true</span> <span class="id" title="tactic">do</span> <span class="id" title="var">skip</span> <span class="id" title="keyword">end</span> }&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| &lt;{<span class="id" title="var">false</span>}&gt; ⇒ &lt;{ <span class="id" title="var">skip</span> }&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">b'</span> ⇒ &lt;{ <span class="id" title="var">while</span> <span class="id" title="var">b'</span> <span class="id" title="tactic">do</span> (<span class="id" title="var">fold_constants_com</span> <span class="id" title="var">c<sub>1</sub></span>) <span class="id" title="keyword">end</span> }&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">fold_constants_com_sound</span> <span class="id" title="var">c</span> :<br/>
+&nbsp;&nbsp;<span class="id" title="var">fold_constants_com</span> <span class="id" title="var">c</span> ≊ <span class="id" title="var">c</span>.<br/>
+<div class="togglescript" id="proofcontrol18" onclick="toggleDisplay('proof18');toggleDisplay('proofcontrol18')"><span class="show"></span></div>
+<div class="proofscript" id="proof18" onclick="toggleDisplay('proof18');toggleDisplay('proofcontrol18')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">c</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">now</span> <span class="id" title="var">cbn</span>; <span class="id" title="tactic">rewrite</span> <span class="id" title="var">fold_constants_aexp_sound</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">now</span> <span class="id" title="var">cbn</span>; <span class="id" title="tactic">rewrite</span> <span class="id" title="var">IHc1</span>,<span class="id" title="var">IHc2</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="var">break_match</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">all</span>: <span class="id" title="tactic">rewrite</span> ?<span class="id" title="var">IHc1</span>, ?<span class="id" title="var">IHc2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">all</span>: <span class="id" title="tactic">rewrite</span> &lt;- (<span class="id" title="var">fold_constants_bexp_sound</span> <span class="id" title="var">b</span>), <span class="id" title="var">EQ</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">all</span>: <span class="id" title="tactic">try</span> <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">iftrue</span>. <span class="comment">(*&nbsp;The&nbsp;optimization&nbsp;in&nbsp;this&nbsp;case&nbsp;corresponds&nbsp;exactly&nbsp;to&nbsp;<span class="inlinecode"><span class="id" title="var">iftrue</span></span>&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">iffalse</span>. <span class="comment">(*&nbsp;The&nbsp;optimization&nbsp;in&nbsp;this&nbsp;case&nbsp;corresponds&nbsp;exactly&nbsp;to&nbsp;<span class="inlinecode"><span class="id" title="var">iffalse</span></span>&nbsp;*)</span><br/>
+&nbsp;&nbsp;- <span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="var">break_match</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">all</span>: <span class="id" title="tactic">rewrite</span> &lt;- (<span class="id" title="var">fold_constants_bexp_sound</span> <span class="id" title="var">b</span>), <span class="id" title="var">EQ</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">all</span>: <span class="id" title="tactic">try</span> <span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">IHc</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">whiletrue</span>. <span class="comment">(*&nbsp;The&nbsp;optimization&nbsp;in&nbsp;this&nbsp;case&nbsp;corresponds&nbsp;exactly&nbsp;to&nbsp;<span class="inlinecode"><span class="id" title="var">whiletrue</span></span>&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">whilefalse</span>. <span class="comment">(*&nbsp;The&nbsp;optimization&nbsp;in&nbsp;this&nbsp;case&nbsp;corresponds&nbsp;exactly&nbsp;to&nbsp;<span class="inlinecode"><span class="id" title="var">whilefalse</span></span>&nbsp;*)</span><br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+
+<div class="doc">
+<a id="lab302"></a><h3 class="section">Example of optimizing Commands</h3>
+ Of course now that we have a sound syntactic level transformation,
+    we can use this instead of our tactic for better efficiency.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <span class="id" title="var">fold_com_ex1_revisited</span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;Original&nbsp;program:&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="var">X</span> := 4 + 5;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Y</span> := <span class="id" title="var">X</span> - 3;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> ((<span class="id" title="var">X</span> - <span class="id" title="var">Y</span>) = (2 + 4)) <span class="id" title="keyword">then</span> <span class="id" title="var">skip</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">Y</span> := 0 <span class="id" title="keyword">end</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> (0 ≤ (4 - (2 + 1))) <span class="id" title="keyword">then</span> <span class="id" title="var">Y</span> := 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">skip</span> <span class="id" title="keyword">end</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">while</span> (<span class="id" title="var">Y</span> = 0) <span class="id" title="tactic">do</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">X</span> := <span class="id" title="var">X</span> + 1<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span> }&gt;<br/>
+&nbsp;&nbsp;≊ <span class="comment">(*&nbsp;After&nbsp;constant&nbsp;folding:&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="var">X</span> := 9;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Y</span> := <span class="id" title="var">X</span> - 3;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> ((<span class="id" title="var">X</span> - <span class="id" title="var">Y</span>) = 6) <span class="id" title="keyword">then</span> <span class="id" title="var">skip</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">Y</span> := 0 <span class="id" title="keyword">end</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Y</span> := 0;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">while</span> (<span class="id" title="var">Y</span> = 0) <span class="id" title="tactic">do</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">X</span> := <span class="id" title="var">X</span> + 1<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span> }&gt;.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">fold_constants_com_sound</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="coqindex.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

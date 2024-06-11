@@ -1,0 +1,324 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="common/css/sf.css" rel="stylesheet" type="text/css" />
+<title>ITrees</title>
+<link href="common/jquery-ui/jquery-ui.css" rel="stylesheet">
+<script src="common/jquery-ui/external/jquery/jquery.js"></script>
+<script src="common/jquery-ui/jquery-ui.js"></script>
+<script src="common/toggleproofs.js"></script>
+<link href="common/css/rip.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="common/slides.js"></script>
+<link href="common/css/slides.css" rel="stylesheet" type="text/css"/>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+<div id='logoinheader'><a href='https://softwarefoundations.cis.upenn.edu'>
+<img src='common/media/image/sf_logo_sm.png' alt='Software Foundations Logo'></a></div>
+<div class='booktitleinheader'><a href='index.html'>Volume 7: Reasoning about Interactive Programs</a></div>
+<ul id='menu'>
+   <li class='section_name'><a href='toc.html'>Table of Contents</a></li>
+   <li class='section_name'><a href='coqindex.html'>Index</a></li>
+</ul>
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">ITrees</h1>
+
+
+<div class="doc">
+<a id="lab249"></a><h3 class="section">The <span class="inlinecode"><span class="id" title="var">Free</span></span> monad:</h3>
+
+<div class="paragraph"> </div>
+
+ Recall the definition of <span class="inlinecode"><span class="id" title="var">FFree</span></span>:
+<br/>
+<span class="inlinecode"><span class="id" title="keyword">Inductive</span> <span class="id" title="var">FFree</span> (<span class="id" title="var">E</span> : <span class="id" title="keyword">Type</span> → <span class="id" title="keyword">Type</span>) (<span class="id" title="var">R</span> : <span class="id" title="keyword">Type</span>) : <span class="id" title="keyword">Type</span> :=<br/>
+| <span class="id" title="var">Ret</span> (<span class="id" title="var">x</span> : <span class="id" title="var">R</span>)<br/>
+| <span class="id" title="var">Do</span> {<span class="id" title="var">X</span>} (<span class="id" title="var">op</span> : <span class="id" title="var">E</span> <span class="id" title="var">X</span>) (<span class="id" title="var">k</span> : <span class="id" title="var">X</span> → <span class="id" title="var">FFree</span> <span class="id" title="var">E</span> <span class="id" title="var">R</span>).
+</span> 
+</div>
+
+<div class="doc">
+<a id="lab250"></a><h3 class="section">A Coinductive Version of FFree</h3>
+
+</div>
+<div class="code">
+
+&nbsp;&nbsp;<span class="id" title="keyword">CoInductive</span> <span class="id" title="var">itree</span> (<span class="id" title="var">E</span> : <span class="id" title="keyword">Type</span> → <span class="id" title="keyword">Type</span>) (<span class="id" title="var">R</span> : <span class="id" title="keyword">Type</span>) :=<br/>
+&nbsp;&nbsp;| <span class="id" title="var">Ret</span> (<span class="id" title="var">r</span>:<span class="id" title="var">R</span>)<br/>
+&nbsp;&nbsp;| <span class="id" title="var">Tau</span> (<span class="id" title="var">t</span> : <span class="id" title="var">itree</span> <span class="id" title="var">E</span> <span class="id" title="var">R</span>)<br/>
+&nbsp;&nbsp;| <span class="id" title="var">Vis</span>  {<span class="id" title="var">X</span>:<span class="id" title="keyword">Type</span>} (<span class="id" title="var">e</span>: <span class="id" title="var">E</span> <span class="id" title="var">X</span>) (<span class="id" title="var">k</span> : <span class="id" title="var">X</span> → <span class="id" title="var">itree</span> <span class="id" title="var">E</span> <span class="id" title="var">R</span>).<br/>
+</div>
+
+<div class="doc">
+Represents computations that can:
+<ul class="doclist">
+<li> Terminate by returning a value of type <span class="inlinecode"><span class="id" title="var">R</span></span>
+
+</li>
+<li> Perform an internal step of computation, before continuing to compute
+
+</li>
+<li> <i>Trigger</i> an event <span class="inlinecode"><span class="id" title="var">e</span></span> expecting a certain answer of type <span class="inlinecode"><span class="id" title="var">X</span></span>. It then continues to compute, but must
+    be ready to do so no matter what is the environment's answer: it therefore takes
+    a continuation indexed by <span class="inlinecode"><span class="id" title="var">X</span></span>
+
+</li>
+</ul>
+
+</div>
+
+<div class="doc">
+<a id="lab251"></a><h2 class="section">ITrees, Pictorially</h2>
+
+<div class="paragraph"> </div>
+
+<img src="images/itrees.png" width="800">
+
+<div class="paragraph"> </div>
+
+
+</div>
+
+<div class="doc">
+<a id="lab253"></a><h3 class="section">First examples of <span class="inlinecode"><span class="id" title="var">itree</span></span> computations</h3>
+
+</div>
+
+<div class="doc">
+We first define the Input/Output events informally described above 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Variant</span> <span class="id" title="var">IOE</span> : <span class="id" title="keyword">Type</span> → <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Output</span> (<span class="id" title="var">n</span> : <span class="id" title="var">nat</span>) : <span class="id" title="var">IOE</span> <span class="id" title="var">unit</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Input</span>            : <span class="id" title="var">IOE</span> <span class="id" title="var">nat</span>.<br/>
+</div>
+
+<div class="doc">
+Here is a very boring computation that simply returns 1789 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <span class="id" title="var">aux_armes</span> : <span class="id" title="var">itree</span> <span class="id" title="var">IOE</span> <span class="id" title="var">nat</span> := <span class="id" title="var">Ret</span> 1789.<br/>
+</div>
+
+<div class="doc">
+And one that requests a value from the user and doubles it 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <span class="id" title="var">double</span> : <span class="id" title="var">itree</span> <span class="id" title="var">IOE</span> <span class="id" title="var">nat</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Vis</span> <span class="id" title="var">Input</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">n</span> ⇒ <span class="id" title="var">Ret</span> (2 × <span class="id" title="var">n</span>)).<br/>
+</div>
+
+<div class="doc">
+A program that repeatedly does I/O: 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">CoFixpoint</span> <span class="id" title="var">echo</span> : <span class="id" title="var">itree</span> <span class="id" title="var">IOE</span> <span class="id" title="var">void</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Vis</span> <span class="id" title="var">Input</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">n</span> ⇒ <span class="id" title="var">Vis</span> (<span class="id" title="var">Output</span> <span class="id" title="var">n</span>) (<span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> ⇒ <span class="id" title="var">echo</span>)).<br/>
+</div>
+
+<div class="doc">
+<a id="lab254"></a><h3 class="section">Silent Divergence</h3>
+
+<div class="paragraph"> </div>
+
+ And finally, an important: the silently diverging computation 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">CoFixpoint</span> <span class="id" title="var">spin_spec</span> : <span class="id" title="var">itree</span> <span class="id" title="var">IOE</span> <span class="id" title="var">void</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Tau</span> <span class="id" title="var">spin_spec</span>.<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">spin</span></span> can have any type at all. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">CoFixpoint</span> <span class="id" title="var">spin</span> {<span class="id" title="var">E</span> <span class="id" title="var">R</span>} : <span class="id" title="var">itree</span> <span class="id" title="var">E</span> <span class="id" title="var">R</span> := <span class="id" title="var">Tau</span> <span class="id" title="var">spin</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab255"></a><h3 class="section">Failure</h3>
+ Consider now an event whose return type is empty 
+</div>
+<div class="code">
+
+&nbsp;&nbsp;<span class="id" title="keyword">Variant</span> <span class="id" title="var">Empty</span> : <span class="id" title="keyword">Type</span> → <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;| <span class="id" title="var">empty</span> : <span class="id" title="var">Empty</span> <span class="id" title="var">void</span>.<br/>
+</div>
+
+<div class="doc">
+The environment cannot respond to this event 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <span class="id" title="tactic">fail</span> {<span class="id" title="var">R</span>} : <span class="id" title="var">itree</span> <span class="id" title="var">Empty</span> <span class="id" title="var">R</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Vis</span> <span class="id" title="var">empty</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">x</span> : <span class="id" title="var">void</span> ⇒ <span class="id" title="keyword">match</span> <span class="id" title="var">x</span> <span class="id" title="keyword">with</span> <span class="id" title="keyword">end</span>).<br/><hr class='doublespaceincode'/>
+&nbsp;&nbsp;
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab256"></a><h3 class="section">Substitution:</h3>
+
+<div class="paragraph"> </div>
+
+ As with the <span class="inlinecode"><span class="id" title="var">FFree</span></span> monad, we can define a "substitution" operation,
+which looks for all the <span class="inlinecode"><span class="id" title="var">Ret</span></span> <span class="inlinecode"><span class="id" title="var">x</span></span> leaves of the tree and applies a
+continuation <span class="inlinecode"><span class="id" title="var">k</span></span> to build a bigger tree : 
+</div>
+<div class="code">
+<hr class='doublespaceincode'/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <span class="id" title="tactic">subst</span> {<span class="id" title="var">E</span> : <span class="id" title="keyword">Type</span> → <span class="id" title="keyword">Type</span>} {<span class="id" title="var">T</span> <span class="id" title="var">U</span> : <span class="id" title="keyword">Type</span>} (<span class="id" title="var">k</span> : <span class="id" title="var">T</span> → <span class="id" title="var">itree</span> <span class="id" title="var">E</span> <span class="id" title="var">U</span>)<br/>
+&nbsp;&nbsp;: <span class="id" title="var">itree</span> <span class="id" title="var">E</span> <span class="id" title="var">T</span> → <span class="id" title="var">itree</span> <span class="id" title="var">E</span> <span class="id" title="var">U</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">cofix</span> <span class="id" title="var">_subst</span> (<span class="id" title="var">u</span> : <span class="id" title="var">itree</span> <span class="id" title="var">E</span> <span class="id" title="var">T</span>) : <span class="id" title="var">itree</span> <span class="id" title="var">E</span> <span class="id" title="var">U</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">u</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Ret</span> <span class="id" title="var">r</span> ⇒ <span class="id" title="var">k</span> <span class="id" title="var">r</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Tau</span> <span class="id" title="var">t</span> ⇒ <span class="id" title="var">Tau</span> (<span class="id" title="var">_subst</span> <span class="id" title="var">t</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Vis</span> <span class="id" title="var">e</span> <span class="id" title="var">h</span> ⇒ <span class="id" title="var">Vis</span> <span class="id" title="var">e</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">x</span> ⇒ <span class="id" title="var">_subst</span> (<span class="id" title="var">h</span> <span class="id" title="var">x</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/><hr class='doublespaceincode'/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab257"></a><h3 class="section">Monad operations</h3>
+
+<div class="paragraph"> </div>
+
+ These ingredients give us all we need to define a monad. 
+<div class="paragraph"> </div>
+
+ Return is just <span class="inlinecode"><span class="id" title="var">Ret</span></span>  
+<div class="paragraph"> </div>
+
+ Bind is just <span class="inlinecode"><span class="id" title="tactic">subst</span></span> with the arguments reordered: 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">bind</span> {<span class="id" title="var">E</span> : <span class="id" title="keyword">Type</span> → <span class="id" title="keyword">Type</span>} {<span class="id" title="var">T</span> <span class="id" title="var">U</span> : <span class="id" title="keyword">Type</span>} (<span class="id" title="var">u</span> : <span class="id" title="var">itree</span> <span class="id" title="var">E</span> <span class="id" title="var">T</span>) (<span class="id" title="var">k</span> : <span class="id" title="var">T</span> → <span class="id" title="var">itree</span> <span class="id" title="var">E</span> <span class="id" title="var">U</span>)<br/>
+&nbsp;&nbsp;: <span class="id" title="var">itree</span> <span class="id" title="var">E</span> <span class="id" title="var">U</span> := <span class="id" title="tactic">subst</span> <span class="id" title="var">k</span> <span class="id" title="var">u</span>.<br/>
+</div>
+
+<div class="doc">
+An elementary <span class="inlinecode"><span class="id" title="var">itree</span></span> computation emits an event: 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">trigger</span> {<span class="id" title="var">E</span> : <span class="id" title="keyword">Type</span> → <span class="id" title="keyword">Type</span>} {<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>} (<span class="id" title="var">e</span> : <span class="id" title="var">E</span> <span class="id" title="var">A</span>) : <span class="id" title="var">itree</span> <span class="id" title="var">E</span> <span class="id" title="var">A</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">Vis</span> <span class="id" title="var">e</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">x</span> ⇒ <span class="id" title="var">Ret</span> <span class="id" title="var">x</span>).<br/><hr class='doublespaceincode'/>
+</div>
+
+<div class="doc">
+<a id="lab258"></a><h2 class="section">Iteration</h2>
+
+<div class="paragraph"> </div>
+
+ What about loops? 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">iter</span> {<span class="id" title="var">E</span> : <span class="id" title="keyword">Type</span> → <span class="id" title="keyword">Type</span>} {<span class="id" title="var">R</span> <span class="id" title="var">I</span>: <span class="id" title="keyword">Type</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">step</span> : <span class="id" title="var">I</span> → <span class="id" title="var">itree</span> <span class="id" title="var">E</span> (<span class="id" title="var">I</span> + <span class="id" title="var">R</span>)) : <span class="id" title="var">I</span> → <span class="id" title="var">itree</span> <span class="id" title="var">E</span> <span class="id" title="var">R</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">cofix</span> <span class="id" title="var">iter_</span> <span class="id" title="var">init</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;one&nbsp;step&nbsp;of&nbsp;the&nbsp;loop&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">lr</span> &lt;- <span class="id" title="var">step</span> <span class="id" title="var">init</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">lr</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;got&nbsp;updated&nbsp;state&nbsp;=&gt;&nbsp;jump&nbsp;back&nbsp;into&nbsp;loop&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">inl</span> <span class="id" title="var">updated</span> ⇒ <span class="id" title="var">Tau</span> (<span class="id" title="var">iter_</span> <span class="id" title="var">updated</span>)<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;got&nbsp;a&nbsp;final&nbsp;result&nbsp;=&gt;&nbsp;terminate&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">inr</span> <span class="id" title="var">result</span> ⇒ <span class="id" title="var">Ret</span> <span class="id" title="var">result</span>             <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+
+<div class="doc">
+Note: the backwards jump is guarded by <span class="inlinecode"><span class="id" title="var">Tau</span></span> 
+<div class="paragraph"> </div>
+
+<a id="lab259"></a><h3 class="section">Example:</h3>
+
+<div class="paragraph"> </div>
+
+ Define the factorial <span class="inlinecode"><span class="id" title="var">fact</span></span> <span class="inlinecode"><span class="id" title="var">n</span></span> using the <span class="inlinecode"><span class="id" title="var">iter</span></span> combinator. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">fact</span> (<span class="id" title="var">n</span> : <span class="id" title="var">nat</span>) : <span class="id" title="var">itree</span> <span class="id" title="var">voidE</span> <span class="id" title="var">nat</span> :=<br/>
+&nbsp;<span class="id" title="var">iter</span>  (<span class="id" title="keyword">fun</span> '(<span class="id" title="var">acc</span>,<span class="id" title="var">n</span>) ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">n</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">O</span> ⇒ <span class="id" title="var">Ret</span> (<span class="id" title="var">inr</span> <span class="id" title="var">acc</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">S</span> <span class="id" title="var">m</span> ⇒ <span class="id" title="var">Ret</span> (<span class="id" title="var">inl</span> (<span class="id" title="var">n</span> × <span class="id" title="var">acc</span>, <span class="id" title="var">m</span>))<br/>
+<span class="id" title="keyword">end</span>) (1,<span class="id" title="var">n</span>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab260"></a><h3 class="section">"Running" an itrees computation</h3>
+
+<div class="paragraph"> </div>
+
+ We cannot simply use <span class="inlinecode"><span class="id" title="keyword">Eval</span></span> <span class="inlinecode"><span class="id" title="tactic">compute</span></span> <span class="inlinecode"><span class="id" title="keyword">in</span></span> <span class="inlinecode">...</span> to "run" an <span class="inlinecode"><span class="id" title="var">itree</span></span> computation.  But, we can provide "fuel" that can be burned to force it: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Fixpoint</span> <span class="id" title="var">burn</span> (<span class="id" title="var">n</span> : <span class="id" title="var">nat</span>) {<span class="id" title="var">E</span> <span class="id" title="var">R</span>} (<span class="id" title="var">t</span> : <span class="id" title="var">itree</span> <span class="id" title="var">E</span> <span class="id" title="var">R</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">n</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">O</span> ⇒ <span class="id" title="var">t</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">S</span> <span class="id" title="var">n</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">observe</span> <span class="id" title="var">t</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">RetF</span> <span class="id" title="var">r</span> ⇒ <span class="id" title="var">Ret</span> <span class="id" title="var">r</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">VisF</span> <span class="id" title="var">e</span> <span class="id" title="var">k</span> ⇒ <span class="id" title="var">Vis</span> <span class="id" title="var">e</span> <span class="id" title="var">k</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">TauF</span> <span class="id" title="var">t'</span> ⇒ <span class="id" title="var">burn</span> <span class="id" title="var">n</span> <span class="id" title="var">t'</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+
+<div class="doc">
+You can test that your factorial computes what it should: 
+</div>
+<div class="code">
+<span class="id" title="keyword">Eval</span> <span class="id" title="tactic">compute</span> <span class="id" title="keyword">in</span> <span class="id" title="var">burn</span> 10 (<span class="id" title="var">fact</span> 6).<br/>
+</div>
+
+<div class="doc">
+==&gt; <span class="inlinecode"><span class="id" title="var">Ret</span></span> <span class="inlinecode">720</span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">itree</span></span> <span class="inlinecode"><span class="id" title="var">voidE</span></span> <span class="inlinecode"><span class="id" title="var">nat</span></span> 
+<div class="paragraph"> </div>
+
+<a id="lab261"></a><h3 class="section">A useful specialization for Imp Semantics</h3>
+
+<div class="paragraph"> </div>
+
+  Imperative loops are particular patterns of iteration: they do not
+carry any accumulator.  We can capture this pattern with a <span class="inlinecode"><span class="id" title="tactic">repeat</span></span>
+combinator.  
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="tactic">repeat</span> {<span class="id" title="var">E</span>} (<span class="id" title="var">step</span> : <span class="id" title="var">itree</span> <span class="id" title="var">E</span> (<span class="id" title="var">unit</span> + <span class="id" title="var">unit</span>)) : <span class="id" title="var">itree</span> <span class="id" title="var">E</span> <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">iter</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> ⇒ <span class="id" title="var">step</span>) <span class="id" title="var">tt</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab262"></a><h3 class="section">Mutual recursion</h3>
+
+<div class="paragraph"> </div>
+
+ The coq development also shows how to encode full, mutual, general-recursive operations. 
+<div class="paragraph"> </div>
+
+ But we'll skip it here, since we don't need that for Imp. 
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="coqindex.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

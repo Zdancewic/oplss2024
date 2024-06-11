@@ -1,0 +1,431 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="common/css/sf.css" rel="stylesheet" type="text/css" />
+<title>Maps: Total and Partial Maps</title>
+<link href="common/jquery-ui/jquery-ui.css" rel="stylesheet">
+<script src="common/jquery-ui/external/jquery/jquery.js"></script>
+<script src="common/jquery-ui/jquery-ui.js"></script>
+<script src="common/toggleproofs.js"></script>
+<link href="common/css/rip.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="common/slides.js"></script>
+<link href="common/css/slides.css" rel="stylesheet" type="text/css"/>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+<div id='logoinheader'><a href='https://softwarefoundations.cis.upenn.edu'>
+<img src='common/media/image/sf_logo_sm.png' alt='Software Foundations Logo'></a></div>
+<div class='booktitleinheader'><a href='index.html'>Volume 7: Reasoning about Interactive Programs</a></div>
+<ul id='menu'>
+   <li class='section_name'><a href='toc.html'>Table of Contents</a></li>
+   <li class='section_name'><a href='coqindex.html'>Index</a></li>
+</ul>
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Maps<span class="subtitle">Total and Partial Maps</span></h1>
+
+
+<div class="doc">
+
+<div class="paragraph"> </div>
+
+ <i>Maps</i> (or <i>dictionaries</i>) are ubiquitous data structures both in
+    ordinary programming and in the theory of programming languages;
+    we're going to need them in many places in the coming chapters.
+
+<div class="paragraph"> </div>
+
+    They also make a nice case study using ideas we've seen in
+    previous chapters, including building data structures out of
+    higher-order functions (from <span class="inlinecode"><span class="id" title="var">Basics</span></span> and <span class="inlinecode"><span class="id" title="var">Poly</span></span>) and the use of
+    reflection to streamline proofs (from <span class="inlinecode"><span class="id" title="var">IndProp</span></span>).
+
+<div class="paragraph"> </div>
+
+    We'll define two flavors of maps: <i>total</i> maps, which include a
+    "default" element to be returned when a key being looked up
+    doesn't exist, and <i>partial</i> maps, which instead return an
+    <span class="inlinecode"><span class="id" title="var">option</span></span> to indicate success or failure.  The latter is defined in
+    terms of the former, using <span class="inlinecode"><span class="id" title="var">None</span></span> as the default element. 
+</div>
+
+<div class="doc">
+<a id="lab14"></a><h1 class="section">The Coq Standard Library</h1>
+
+<div class="paragraph"> </div>
+
+ We'll import things from the standard library from now on... 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">From</span> <span class="id" title="var">Coq</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="var">Arith.Arith</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Coq</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="var">Bool.Bool</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <span class="id" title="var">Coq.Strings.String</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Coq</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="var">Logic.FunctionalExtensionality</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Coq</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="var">Lists.List</span>.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="var">ListNotations</span>.<br/>
+<span class="id" title="keyword">Set</span> <span class="id" title="var">Default</span> <span class="id" title="keyword">Goal</span> <span class="id" title="var">Selector</span> "!".<br/>
+</div>
+
+<div class="doc">
+If you want to find out how or where a notation is defined, the
+    <span class="inlinecode"><span class="id" title="keyword">Locate</span></span> command is useful.  For example, where is the natural
+    addition operation defined in the standard library? 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Locate</span> "+".<br/>
+</div>
+
+<div class="doc">
+(There are several uses of the <span class="inlinecode">+</span> notation, but only one for
+    naturals.) 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Print</span> <span class="id" title="var">Init.Nat.add</span>.<br/>
+</div>
+
+<div class="doc">
+We'll see some more uses of <span class="inlinecode"><span class="id" title="keyword">Locate</span></span> in the <a href="Imp.html"><span class="inlineref">Imp</span></a> chapter. 
+</div>
+
+<div class="doc">
+<a id="lab15"></a><h1 class="section">Identifiers</h1>
+
+<div class="paragraph"> </div>
+
+ First, we need a type for the keys that we will use to index into
+    our maps.  In <span class="inlinecode"><span class="id" title="var">Lists.v</span></span> we introduced a fresh type <span class="inlinecode"><span class="id" title="var">id</span></span> for a
+    similar purpose; here and for the rest of <i>Software Foundations</i>
+    we will use the <span class="inlinecode"><span class="id" title="var">string</span></span> type from Coq's standard library. 
+<div class="paragraph"> </div>
+
+ To compare strings, we use the function <span class="inlinecode"><span class="id" title="var">eqb</span></span> from the <span class="inlinecode"><span class="id" title="var">String</span></span>
+    module in the standard library. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Check</span> <span class="id" title="var">String.eqb_refl</span> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <span class="id" title="var">x</span> : <span class="id" title="var">string</span>, (<span class="id" title="var">x</span> =? <span class="id" title="var">x</span>)%<span class="id" title="var">string</span> = <span class="id" title="var">true</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab16"></a><h3 class="section"> </h3>
+ We will often use a few basic properties of string equality... 
+</div>
+<div class="code">
+<span class="id" title="keyword">Check</span> <span class="id" title="var">String.eqb_eq</span> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <span class="id" title="var">n</span> <span class="id" title="var">m</span> : <span class="id" title="var">string</span>, (<span class="id" title="var">n</span> =? <span class="id" title="var">m</span>)%<span class="id" title="var">string</span> = <span class="id" title="var">true</span> ↔ <span class="id" title="var">n</span> = <span class="id" title="var">m</span>.<br/>
+<span class="id" title="keyword">Check</span> <span class="id" title="var">String.eqb_neq</span> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <span class="id" title="var">n</span> <span class="id" title="var">m</span> : <span class="id" title="var">string</span>, (<span class="id" title="var">n</span> =? <span class="id" title="var">m</span>)%<span class="id" title="var">string</span> = <span class="id" title="var">false</span> ↔ <span class="id" title="var">n</span> ≠ <span class="id" title="var">m</span>.<br/>
+<span class="id" title="keyword">Check</span> <span class="id" title="var">String.eqb_spec</span> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <span class="id" title="var">x</span> <span class="id" title="var">y</span> : <span class="id" title="var">string</span>, <span class="id" title="var">reflect</span> (<span class="id" title="var">x</span> = <span class="id" title="var">y</span>) (<span class="id" title="var">String.eqb</span> <span class="id" title="var">x</span> <span class="id" title="var">y</span>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab17"></a><h1 class="section">Total Maps</h1>
+
+<div class="paragraph"> </div>
+
+ Our main job in this chapter will be to build a definition of
+    partial maps that is similar in behavior to the one we saw in the
+    <a href="Lists.html"><span class="inlineref">Lists</span></a> chapter, plus accompanying lemmas about its behavior.
+
+<div class="paragraph"> </div>
+
+    This time around, though, we're going to use <i>functions</i>, rather
+    than lists of key-value pairs, to build maps.  The advantage of
+    this representation is that it offers a more "extensional" view of
+    maps: two maps that respond to queries in the same way will be
+    represented as exactly the same function, rather than just as
+    "equivalent" list structures.  This, in turn, simplifies proofs
+    that use maps. 
+<div class="paragraph"> </div>
+
+<a id="lab18"></a><h3 class="section"> </h3>
+ We build up to partial maps in two steps.  First, we define a type
+    of <i>total maps</i> that return a default value when we look up a key
+    that is not present in the map. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">total_map</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) := <span class="id" title="var">string</span> → <span class="id" title="var">A</span>.<br/>
+</div>
+
+<div class="doc">
+Intuitively, a total map over an element type <span class="inlinecode"><span class="id" title="var">A</span></span> is just a
+    function that can be used to look up <span class="inlinecode"><span class="id" title="var">string</span></span>s, yielding <span class="inlinecode"><span class="id" title="var">A</span></span>s. 
+<div class="paragraph"> </div>
+
+<a id="lab19"></a><h3 class="section"> </h3>
+ The function <span class="inlinecode"><span class="id" title="var">t_empty</span></span> yields an empty total map, given a default
+    element; this map always returns the default element when applied
+    to any string. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">t_empty</span> {<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>} (<span class="id" title="var">v</span> : <span class="id" title="var">A</span>) : <span class="id" title="var">total_map</span> <span class="id" title="var">A</span> :=<br/>
+&nbsp;&nbsp;(<span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> ⇒ <span class="id" title="var">v</span>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab20"></a><h3 class="section"> </h3>
+ More interesting is the map-updating function, which (as always)
+    takes a map <span class="inlinecode"><span class="id" title="var">m</span></span>, a key <span class="inlinecode"><span class="id" title="var">x</span></span>, and a value <span class="inlinecode"><span class="id" title="var">v</span></span> and returns a new map
+    that takes <span class="inlinecode"><span class="id" title="var">x</span></span> to <span class="inlinecode"><span class="id" title="var">v</span></span> and takes every other key to whatever <span class="inlinecode"><span class="id" title="var">m</span></span>
+    does.  The novelty here is that we achieve this effect by wrapping
+    a new function around the old one. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">t_update</span> {<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>} (<span class="id" title="var">m</span> : <span class="id" title="var">total_map</span> <span class="id" title="var">A</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">x</span> : <span class="id" title="var">string</span>) (<span class="id" title="var">v</span> : <span class="id" title="var">A</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <span class="id" title="var">x'</span> ⇒ <span class="id" title="keyword">if</span> <span class="id" title="var">String.eqb</span> <span class="id" title="var">x</span> <span class="id" title="var">x'</span> <span class="id" title="keyword">then</span> <span class="id" title="var">v</span> <span class="id" title="keyword">else</span> <span class="id" title="var">m</span> <span class="id" title="var">x'</span>.<br/>
+</div>
+
+<div class="doc">
+This definition is a nice example of higher-order programming:
+    <span class="inlinecode"><span class="id" title="var">t_update</span></span> takes a <i>function</i> <span class="inlinecode"><span class="id" title="var">m</span></span> and yields a new function
+    <span class="inlinecode"><span class="id" title="keyword">fun</span></span> <span class="inlinecode"><span class="id" title="var">x'</span></span> <span class="inlinecode">⇒</span> <span class="inlinecode">...</span> that behaves like the desired map. 
+<div class="paragraph"> </div>
+
+<a id="lab21"></a><h3 class="section"> </h3>
+ For example, we can build a map taking <span class="inlinecode"><span class="id" title="var">string</span></span>s to <span class="inlinecode"><span class="id" title="var">bool</span></span>s, where
+    <span class="inlinecode">&quot;<span class="id" title="var">foo</span>&quot;</span> and <span class="inlinecode">&quot;<span class="id" title="var">bar</span>&quot;</span> are mapped to <span class="inlinecode"><span class="id" title="var">true</span></span> and every other key is
+    mapped to <span class="inlinecode"><span class="id" title="var">false</span></span>, like this: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">examplemap</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">t_update</span> (<span class="id" title="var">t_update</span> (<span class="id" title="var">t_empty</span> <span class="id" title="var">false</span>) "foo" <span class="id" title="var">true</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"bar" <span class="id" title="var">true</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab22"></a><h3 class="section"> </h3>
+ Next, let's introduce some notations to facilitate working with
+    maps. 
+<div class="paragraph"> </div>
+
+ First, we use the following notation to represent an empty total
+    map with a default value. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Notation</span> &quot;'_' '!<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span>' v" := (<span class="id" title="var">t_empty</span> <span class="id" title="var">v</span>)<br/>
+&nbsp;&nbsp;(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 100, <span class="id" title="tactic">right</span> <span class="id" title="keyword">associativity</span>).<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Example</span> <span class="id" title="var">example_empty</span> := (<span class="id" title="var">_</span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">false</span>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab23"></a><h3 class="section"> </h3>
+ We next introduce a convenient notation for extending an existing
+    map with a new binding. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Notation</span> &quot;x '!<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span>' v ';' m" := (<span class="id" title="var">t_update</span> <span class="id" title="var">m</span> <span class="id" title="var">x</span> <span class="id" title="var">v</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 100, <span class="id" title="var">v</span> <span class="id" title="tactic">at</span> <span class="id" title="var">next</span> <span class="id" title="keyword">level</span>, <span class="id" title="tactic">right</span> <span class="id" title="keyword">associativity</span>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab24"></a><h3 class="section"> </h3>
+ The <span class="inlinecode"><span class="id" title="var">examplemap</span></span> above can now be defined as follows: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">examplemap'</span> :=<br/>
+&nbsp;&nbsp;( "bar" !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">true</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"foo" !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">true</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">_</span>     !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">false</span><br/>
+&nbsp;&nbsp;).<br/><hr class='doublespaceincode'/>
+</div>
+
+<div class="doc">
+<a id="lab25"></a><h3 class="section"> </h3>
+ When we use maps in later chapters, we'll need several fundamental
+    facts about how they behave. 
+<div class="paragraph"> </div>
+
+ (Some of the proofs require the functional extensionality axiom,
+    which was discussed in the <a href="Logic.html"><span class="inlineref">Logic</span></a> chapter.) 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">t_apply_empty</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">x</span> : <span class="id" title="var">string</span>) (<span class="id" title="var">v</span> : <span class="id" title="var">A</span>),<br/>
+&nbsp;&nbsp;(<span class="id" title="var">_</span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v</span>) <span class="id" title="var">x</span> = <span class="id" title="var">v</span>.<br/>
+<div class="togglescript" id="proofcontrol5" onclick="toggleDisplay('proof5');toggleDisplay('proofcontrol5')"><span class="show"></span></div>
+<div class="proofscript" id="proof5" onclick="toggleDisplay('proof5');toggleDisplay('proofcontrol5')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;FILL&nbsp;IN&nbsp;HERE&nbsp;*)</span> <span class="id" title="var">Admitted</span>.<br/>
+</div>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">t_update_eq</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">total_map</span> <span class="id" title="var">A</span>) <span class="id" title="var">x</span> <span class="id" title="var">v</span>,<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x</span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v</span> ; <span class="id" title="var">m</span>) <span class="id" title="var">x</span> = <span class="id" title="var">v</span>.<br/>
+<div class="togglescript" id="proofcontrol6" onclick="toggleDisplay('proof6');toggleDisplay('proofcontrol6')"><span class="show"></span></div>
+<div class="proofscript" id="proof6" onclick="toggleDisplay('proof6');toggleDisplay('proofcontrol6')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;FILL&nbsp;IN&nbsp;HERE&nbsp;*)</span> <span class="id" title="var">Admitted</span>.<br/>
+</div>
+
+<br/>
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">t_update_neq</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">total_map</span> <span class="id" title="var">A</span>) <span class="id" title="var">x<sub>1</sub></span> <span class="id" title="var">x<sub>2</sub></span> <span class="id" title="var">v</span>,<br/>
+&nbsp;&nbsp;<span class="id" title="var">x<sub>1</sub></span> ≠ <span class="id" title="var">x<sub>2</sub></span> →<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x<sub>1</sub></span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v</span> ; <span class="id" title="var">m</span>) <span class="id" title="var">x<sub>2</sub></span> = <span class="id" title="var">m</span> <span class="id" title="var">x<sub>2</sub></span>.<br/>
+<div class="togglescript" id="proofcontrol7" onclick="toggleDisplay('proof7');toggleDisplay('proofcontrol7')"><span class="show"></span></div>
+<div class="proofscript" id="proof7" onclick="toggleDisplay('proof7');toggleDisplay('proofcontrol7')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;FILL&nbsp;IN&nbsp;HERE&nbsp;*)</span> <span class="id" title="var">Admitted</span>.<br/>
+</div>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">t_update_shadow</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">total_map</span> <span class="id" title="var">A</span>) <span class="id" title="var">x</span> <span class="id" title="var">v<sub>1</sub></span> <span class="id" title="var">v<sub>2</sub></span>,<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x</span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v<sub>2</sub></span> ; <span class="id" title="var">x</span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v<sub>1</sub></span> ; <span class="id" title="var">m</span>) = (<span class="id" title="var">x</span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v<sub>2</sub></span> ; <span class="id" title="var">m</span>).<br/>
+<div class="togglescript" id="proofcontrol8" onclick="toggleDisplay('proof8');toggleDisplay('proofcontrol8')"><span class="show"></span></div>
+<div class="proofscript" id="proof8" onclick="toggleDisplay('proof8');toggleDisplay('proofcontrol8')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;FILL&nbsp;IN&nbsp;HERE&nbsp;*)</span> <span class="id" title="var">Admitted</span>.<br/>
+</div>
+</div>
+
+<div class="doc">
+<a id="lab30"></a><h3 class="section"> </h3>
+  
+</div>
+<div class="code">
+<hr class='doublespaceincode'/>
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">t_update_same</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">total_map</span> <span class="id" title="var">A</span>) <span class="id" title="var">x</span>,<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x</span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">m</span> <span class="id" title="var">x</span> ; <span class="id" title="var">m</span>) = <span class="id" title="var">m</span>.<br/>
+<div class="togglescript" id="proofcontrol9" onclick="toggleDisplay('proof9');toggleDisplay('proofcontrol9')"><span class="show"></span></div>
+<div class="proofscript" id="proof9" onclick="toggleDisplay('proof9');toggleDisplay('proofcontrol9')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;FILL&nbsp;IN&nbsp;HERE&nbsp;*)</span> <span class="id" title="var">Admitted</span>.<br/>
+</div>
+
+<br/>
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">t_update_permute</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">total_map</span> <span class="id" title="var">A</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">v<sub>1</sub></span> <span class="id" title="var">v<sub>2</sub></span> <span class="id" title="var">x<sub>1</sub></span> <span class="id" title="var">x<sub>2</sub></span>,<br/>
+&nbsp;&nbsp;<span class="id" title="var">x<sub>2</sub></span> ≠ <span class="id" title="var">x<sub>1</sub></span> →<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x<sub>1</sub></span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v<sub>1</sub></span> ; <span class="id" title="var">x<sub>2</sub></span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v<sub>2</sub></span> ; <span class="id" title="var">m</span>)<br/>
+&nbsp;&nbsp;=<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x<sub>2</sub></span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v<sub>2</sub></span> ; <span class="id" title="var">x<sub>1</sub></span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v<sub>1</sub></span> ; <span class="id" title="var">m</span>).<br/>
+<div class="togglescript" id="proofcontrol10" onclick="toggleDisplay('proof10');toggleDisplay('proofcontrol10')"><span class="show"></span></div>
+<div class="proofscript" id="proof10" onclick="toggleDisplay('proof10');toggleDisplay('proofcontrol10')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;FILL&nbsp;IN&nbsp;HERE&nbsp;*)</span> <span class="id" title="var">Admitted</span>.<br/>
+</div>
+</div>
+
+<div class="doc">
+<a id="lab33"></a><h1 class="section">Partial maps</h1>
+
+<div class="paragraph"> </div>
+
+ Lastly, we define <i>partial maps</i> on top of total maps.  A partial
+    map with elements of type <span class="inlinecode"><span class="id" title="var">A</span></span> is simply a total map with elements
+    of type <span class="inlinecode"><span class="id" title="var">option</span></span> <span class="inlinecode"><span class="id" title="var">A</span></span> and default element <span class="inlinecode"><span class="id" title="var">None</span></span>. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">partial_map</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) := <span class="id" title="var">total_map</span> (<span class="id" title="var">option</span> <span class="id" title="var">A</span>).<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">empty</span> {<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>} : <span class="id" title="var">partial_map</span> <span class="id" title="var">A</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">t_empty</span> <span class="id" title="var">None</span>.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">update</span> {<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>} (<span class="id" title="var">m</span> : <span class="id" title="var">partial_map</span> <span class="id" title="var">A</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">x</span> : <span class="id" title="var">string</span>) (<span class="id" title="var">v</span> : <span class="id" title="var">A</span>) :=<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x</span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">Some</span> <span class="id" title="var">v</span> ; <span class="id" title="var">m</span>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab34"></a><h3 class="section"> </h3>
+ We introduce a similar notation for partial maps: 
+</div>
+<div class="code">
+<span class="id" title="keyword">Notation</span> &quot;x '<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span>' v ';' m" := (<span class="id" title="var">update</span> <span class="id" title="var">m</span> <span class="id" title="var">x</span> <span class="id" title="var">v</span>)<br/>
+&nbsp;&nbsp;(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 100, <span class="id" title="var">v</span> <span class="id" title="tactic">at</span> <span class="id" title="var">next</span> <span class="id" title="keyword">level</span>, <span class="id" title="tactic">right</span> <span class="id" title="keyword">associativity</span>).<br/>
+</div>
+
+<div class="doc">
+We can also hide the last case when it is empty. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Notation</span> &quot;x '<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span>' v" := (<span class="id" title="var">update</span> <span class="id" title="var">empty</span> <span class="id" title="var">x</span> <span class="id" title="var">v</span>)<br/>
+&nbsp;&nbsp;(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 100).<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">examplepmap</span> :=<br/>
+&nbsp;&nbsp;("Church" <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">true</span> ; "Turing" <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">false</span>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab35"></a><h3 class="section"> </h3>
+ We now straightforwardly lift all of the basic lemmas about total
+    maps to partial maps.  
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">apply_empty</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">x</span> : <span class="id" title="var">string</span>),<br/>
+&nbsp;&nbsp;@<span class="id" title="var">empty</span> <span class="id" title="var">A</span> <span class="id" title="var">x</span> = <span class="id" title="var">None</span>.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">update_eq</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">partial_map</span> <span class="id" title="var">A</span>) <span class="id" title="var">x</span> <span class="id" title="var">v</span>,<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x</span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">v</span> ; <span class="id" title="var">m</span>) <span class="id" title="var">x</span> = <span class="id" title="var">Some</span> <span class="id" title="var">v</span>.<br/><hr class='doublespaceincode'/>
+
+<br/>
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">update_neq</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">partial_map</span> <span class="id" title="var">A</span>) <span class="id" title="var">x<sub>1</sub></span> <span class="id" title="var">x<sub>2</sub></span> <span class="id" title="var">v</span>,<br/>
+&nbsp;&nbsp;<span class="id" title="var">x<sub>2</sub></span> ≠ <span class="id" title="var">x<sub>1</sub></span> →<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x<sub>2</sub></span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">v</span> ; <span class="id" title="var">m</span>) <span class="id" title="var">x<sub>1</sub></span> = <span class="id" title="var">m</span> <span class="id" title="var">x<sub>1</sub></span>.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">update_shadow</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">partial_map</span> <span class="id" title="var">A</span>) <span class="id" title="var">x</span> <span class="id" title="var">v<sub>1</sub></span> <span class="id" title="var">v<sub>2</sub></span>,<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x</span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">v<sub>2</sub></span> ; <span class="id" title="var">x</span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">v<sub>1</sub></span> ; <span class="id" title="var">m</span>) = (<span class="id" title="var">x</span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">v<sub>2</sub></span> ; <span class="id" title="var">m</span>).<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">update_same</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">partial_map</span> <span class="id" title="var">A</span>) <span class="id" title="var">x</span> <span class="id" title="var">v</span>,<br/>
+&nbsp;&nbsp;<span class="id" title="var">m</span> <span class="id" title="var">x</span> = <span class="id" title="var">Some</span> <span class="id" title="var">v</span> →<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x</span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">v</span> ; <span class="id" title="var">m</span>) = <span class="id" title="var">m</span>.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">update_permute</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">partial_map</span> <span class="id" title="var">A</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x<sub>1</sub></span> <span class="id" title="var">x<sub>2</sub></span> <span class="id" title="var">v<sub>1</sub></span> <span class="id" title="var">v<sub>2</sub></span>,<br/>
+&nbsp;&nbsp;<span class="id" title="var">x<sub>2</sub></span> ≠ <span class="id" title="var">x<sub>1</sub></span> →<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x<sub>1</sub></span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">v<sub>1</sub></span> ; <span class="id" title="var">x<sub>2</sub></span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">v<sub>2</sub></span> ; <span class="id" title="var">m</span>) = (<span class="id" title="var">x<sub>2</sub></span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">v<sub>2</sub></span> ; <span class="id" title="var">x<sub>1</sub></span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">v<sub>1</sub></span> ; <span class="id" title="var">m</span>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab36"></a><h3 class="section"> </h3>
+ One last thing: For partial maps, it's convenient to introduce a
+    notion of map inclusion, stating that all the entries in one map
+    are also present in another: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">includedin</span> {<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>} (<span class="id" title="var">m</span> <span class="id" title="var">m'</span> : <span class="id" title="var">partial_map</span> <span class="id" title="var">A</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <span class="id" title="var">x</span> <span class="id" title="var">v</span>, <span class="id" title="var">m</span> <span class="id" title="var">x</span> = <span class="id" title="var">Some</span> <span class="id" title="var">v</span> → <span class="id" title="var">m'</span> <span class="id" title="var">x</span> = <span class="id" title="var">Some</span> <span class="id" title="var">v</span>.<br/>
+</div>
+
+<div class="doc">
+We can then show that map update preserves map inclusion -- that is: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">includedin_update</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> <span class="id" title="var">m'</span> : <span class="id" title="var">partial_map</span> <span class="id" title="var">A</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">x</span> : <span class="id" title="var">string</span>) (<span class="id" title="var">vx</span> : <span class="id" title="var">A</span>),<br/>
+&nbsp;&nbsp;<span class="id" title="var">includedin</span> <span class="id" title="var">m</span> <span class="id" title="var">m'</span> →<br/>
+&nbsp;&nbsp;<span class="id" title="var">includedin</span> (<span class="id" title="var">x</span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">vx</span> ; <span class="id" title="var">m</span>) (<span class="id" title="var">x</span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">vx</span> ; <span class="id" title="var">m'</span>).<br/>
+</div>
+
+<div class="doc">
+This property is quite useful for reasoning about languages with
+    variable binding -- e.g., the Simply Typed Lambda Calculus, which
+    we will see in <i>Programming Language Foundations</i>, where maps are
+    used to keep track of which program variables are defined in a
+    given scope. 
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="coqindex.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

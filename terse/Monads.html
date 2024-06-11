@@ -1,0 +1,883 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="common/css/sf.css" rel="stylesheet" type="text/css" />
+<title>Monads</title>
+<link href="common/jquery-ui/jquery-ui.css" rel="stylesheet">
+<script src="common/jquery-ui/external/jquery/jquery.js"></script>
+<script src="common/jquery-ui/jquery-ui.js"></script>
+<script src="common/toggleproofs.js"></script>
+<link href="common/css/rip.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="common/slides.js"></script>
+<link href="common/css/slides.css" rel="stylesheet" type="text/css"/>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+<div id='logoinheader'><a href='https://softwarefoundations.cis.upenn.edu'>
+<img src='common/media/image/sf_logo_sm.png' alt='Software Foundations Logo'></a></div>
+<div class='booktitleinheader'><a href='index.html'>Volume 7: Reasoning about Interactive Programs</a></div>
+<ul id='menu'>
+   <li class='section_name'><a href='toc.html'>Table of Contents</a></li>
+   <li class='section_name'><a href='coqindex.html'>Index</a></li>
+</ul>
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Monads</h1>
+
+
+<div class="doc">
+<a id="lab167"></a><h3 class="section"> </h3>
+ <img src="images/enter-the-monad.jpg" width="500"> 
+<div class="paragraph"> </div>
+
+<a id="lab168"></a><h2 class="section">Enter the Monad</h2>
+ A <span class="inlinecode"><span class="id" title="var">Monad</span></span> is just a datatype that can represent some kind of computational behavior.
+   A monad supports a "well-behaved" notion of <i>sequential composition</i>.
+
+<div class="paragraph"> </div>
+
+  Examples include:
+<ul class="doclist">
+<li> mutable state
+
+</li>
+<li> failure and exceptions
+
+</li>
+<li> nondeterminism
+
+</li>
+<li> I/O
+
+</li>
+<li> divergence
+
+</li>
+</ul>
+
+</div>
+
+<div class="doc">
+<a id="lab169"></a><h2 class="section">Modeling Imperative Programs</h2>
+
+<div class="paragraph"> </div>
+
+ Large-step operational semantics for sequential composition of Imp commands: 
+<div class="paragraph"> </div>
+
+<br/>
+<span class="inlinecode"><span class="id" title="keyword">Inductive</span> <span class="id" title="var">ceval</span> : <span class="id" title="var">com</span> → <span class="id" title="var">mem</span> → <span class="id" title="var">mem</span> → <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;...<br/>
+&nbsp;&nbsp;| <span class="id" title="var">E_Seq</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="var">c<sub>2</sub></span> <span class="id" title="var">st</span> <span class="id" title="var">st'</span> <span class="id" title="var">st''</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">st</span>  =[ <span class="id" title="var">c<sub>1</sub></span> ]=&gt; <span class="id" title="var">st'</span>  →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">st'</span> =[ <span class="id" title="var">c<sub>2</sub></span> ]=&gt; <span class="id" title="var">st''</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">st</span>  =[ <span class="id" title="var">c<sub>1</sub></span> ; <span class="id" title="var">c<sub>2</sub></span> ]=&gt; <span class="id" title="var">st''</span>
+</span>
+<div class="paragraph"> </div>
+
+<a id="lab170"></a><h3 class="section">Evaluation as a function (revisited)</h3>
+ What if we could model a command by <span class="inlinecode"><span class="id" title="var">denote</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">mem</span></span> <span class="inlinecode">→</span> <span class="inlinecode"><span class="id" title="var">mem</span></span> ?
+<div class="paragraph"> </div>
+
+<br/>
+<span class="inlinecode"><span class="id" title="keyword">Fixpoint</span> <span class="id" title="var">denote</span> (<span class="id" title="var">c</span>:<span class="id" title="var">com</span>) : <span class="id" title="var">mem</span> → <span class="id" title="var">mem</span> :=<br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">c</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;| ... <span class="comment">(*&nbsp;omitted&nbsp;*)</span><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;| <span class="id" title="var">c<sub>1</sub></span> ; <span class="id" title="var">c<sub>2</sub></span> ⇒ <span class="id" title="keyword">fun</span> <span class="id" title="var">st</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">st'</span>  := <span class="id" title="var">denote</span> <span class="id" title="var">c<sub>1</sub></span> <span class="id" title="var">st</span> <span class="id" title="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">st''</span> := <span class="id" title="var">denote</span> <span class="id" title="var">c<sub>2</sub></span> <span class="id" title="var">st'</span> <span class="id" title="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">st''</span><br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.
+</span> 
+<div class="paragraph"> </div>
+
+ Unfortunately, this doesn't work!
+<br/>
+<span class="inlinecode">&nbsp;&nbsp;| <span class="id" title="var">CWhile</span> <span class="id" title="var">b</span> <span class="id" title="var">c</span> ⇒  ???  <span class="comment">(*&nbsp;No&nbsp;Coq&nbsp;function&nbsp;of&nbsp;type&nbsp;<span class="inlinecode"><span class="id" title="var">mem</span></span> <span class="inlinecode">→</span> <span class="inlinecode"><span class="id" title="var">mem</span></span>&nbsp;can&nbsp;work.&nbsp;*)</span><br/>
+
+</span>
+<div class="paragraph"> </div>
+
+<a id="lab171"></a><h3 class="section">Towards a solution</h3>
+
+<div class="paragraph"> </div>
+
+ We will (eventually) be able to implement a function semantics for <span class="inlinecode"><span class="id" title="var">Imp</span></span>,
+but we have to find an appropriate semantic domain. 
+<div class="paragraph"> </div>
+
+ Starting point: <i>stateful computation</i>  
+<div class="paragraph"> </div>
+
+ (Aside: The full Coq development has an extended tutorial about monads.) 
+</div>
+
+<div class="doc">
+<a id="lab172"></a><h2 class="section">Stateful computations returning values</h2>
+ Consider how to model this "Imp-like" program:
+<br/>
+<span class="inlinecode"><span class="id" title="keyword">Definition</span> <span class="id" title="var">fact5_body</span> :=<br/>
+&lt;{ <span class="id" title="var">X</span> := 5;<br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="var">Z</span> := <span class="id" title="var">X</span>;<br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="var">Y</span> := 1;<br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="var">while</span> <span class="id" title="var">Z</span> ≠ 0 <span class="id" title="tactic">do</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Y</span> := <span class="id" title="var">Y</span> × <span class="id" title="var">Z</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Z</span> := <span class="id" title="var">Z</span> - 1<br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>;<br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">return</span> <span class="id" title="var">Y</span>;  <span class="comment">(*&nbsp;&nbsp;&nbsp;&lt;==&nbsp;NEW!&nbsp;*)</span><br/>
+}&gt;
+</span>
+<div class="paragraph"> </div>
+
+ We would want to denote it by a function this type:
+<br/>
+<span class="inlinecode">&nbsp;<span class="id" title="var">mem</span> → <span class="id" title="var">mem</span> × <span class="id" title="var">nat</span>
+</span>
+<div class="paragraph"> </div>
+
+<a id="lab173"></a><h2 class="section">State monads</h2>
+
+<div class="paragraph"> </div>
+
+ A stateful computation that returns a value of type <span class="inlinecode"><span class="id" title="var">B</span></span> takes a state <span class="inlinecode"><span class="id" title="var">S</span></span> as
+  input and produces a (possibly updated state) along with the value of type <span class="inlinecode"><span class="id" title="var">B</span></span>.
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <span class="id" title="var">state</span> (<span class="id" title="var">S</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">B</span>:<span class="id" title="keyword">Type</span>) : <span class="id" title="keyword">Type</span> :=  <span class="id" title="var">S</span> → <span class="id" title="var">S</span> × <span class="id" title="var">B</span>.<br/>
+</div>
+
+<div class="doc">
+
+<div class="paragraph"> </div>
+
+ For any <span class="inlinecode"><span class="id" title="var">S</span></span>, the type <span class="inlinecode"><span class="id" title="var">state</span></span> <span class="inlinecode"><span class="id" title="var">S</span></span> is a <i>monad</i>. 
+<div class="paragraph"> </div>
+
+ Denotation for Imp commands that produce no value:
+<br/>
+<span class="inlinecode">&nbsp;&nbsp;<span class="id" title="var">state</span> <span class="id" title="var">mem</span> <span class="id" title="var">unit</span> = <span class="id" title="var">mem</span> → <span class="id" title="var">mem</span> × <span class="id" title="var">unit</span>
+</span> 
+<div class="paragraph"> </div>
+
+    Denotation for Imp-like programs that produce a <span class="inlinecode"><span class="id" title="var">nat</span></span> value:
+<br/>
+<span class="inlinecode">&nbsp;&nbsp;<span class="id" title="var">state</span> <span class="id" title="var">mem</span> <span class="id" title="var">nat</span> = <span class="id" title="var">mem</span> → <span class="id" title="var">mem</span> × <span class="id" title="var">nat</span>
+</span><a id="lab174"></a><h3 class="section">Sequential composition of commands</h3>
+
+<div class="paragraph"> </div>
+
+<br/>
+<span class="inlinecode">&nbsp;&nbsp;&nbsp;&nbsp;&lt;{ <span class="id" title="var">c<sub>1</sub></span> ; <span class="id" title="var">c<sub>2</sub></span> }&gt;            <span class="comment">(*&nbsp;&lt;==&nbsp;Imp&nbsp;sequential&nbsp;composition&nbsp;*)</span><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> σ ⇒                  <span class="comment">(*&nbsp;&lt;==&nbsp;with&nbsp;"state&nbsp;plumbing"&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (σ', <span class="id" title="var">_</span>) := <span class="id" title="var">c<sub>1</sub></span> σ <span class="id" title="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">c<sub>2</sub></span> <span class="id" title="var">tt</span> σ'                   
+</span> 
+<div class="paragraph"> </div>
+
+<a id="lab175"></a><h3 class="section">The <span class="inlinecode"><span class="id" title="var">bind</span></span> operation</h3>
+
+<div class="paragraph"> </div>
+
+ The state monad's <span class="inlinecode"><span class="id" title="var">bind</span></span> operation explicitly "plumbs" the state
+  through the computation. It generalizes <span class="inlinecode"><span class="id" title="keyword">let</span></span>.
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <span class="id" title="var">state_bind</span> {<span class="id" title="var">S</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span>} (<span class="id" title="var">m</span> : <span class="id" title="var">state</span> <span class="id" title="var">S</span> <span class="id" title="var">A</span>) (<span class="id" title="var">k</span>:<span class="id" title="var">A</span> → <span class="id" title="var">state</span> <span class="id" title="var">S</span> <span class="id" title="var">B</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;: <span class="id" title="var">state</span> <span class="id" title="var">S</span> <span class="id" title="var">B</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> σ ⇒ <span class="id" title="keyword">let</span> '(σ', <span class="id" title="var">a</span>) := <span class="id" title="var">m</span> σ <span class="id" title="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">k</span> <span class="id" title="var">a</span> σ'.<br/>
+</div>
+
+<div class="doc">
+We introduce some notation to make using <span class="inlinecode"><span class="id" title="var">bind</span></span> more palatable. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> "x &lt;- m ;; body" := (<span class="id" title="var">state_bind</span> <span class="id" title="var">m</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">x</span> ⇒ <span class="id" title="var">body</span>))<br/>
+</div>
+
+<div class="doc">
+<a id="lab176"></a><h3 class="section">Let notation vs. Monad notation</h3>
+
+<div class="paragraph"> </div>
+
+<br/>
+<span class="inlinecode">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+----------------- <span class="id" title="var">Equal</span> <span class="id" title="tactic">by</span> <span class="id" title="var">Unfolding</span> <span class="id" title="var">Definitions</span> --------------+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|                                                               |<br/>
+<span class="id" title="var">STANDARD</span> <span class="id" title="var">COQ</span>:    <span class="id" title="var">EXPLICIT</span> <span class="id" title="var">STATE</span> <span class="id" title="var">PLUMBING</span>:   <span class="id" title="var">BIND</span>:               <span class="id" title="var">MONADIC</span> <span class="id" title="var">NOTATION</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> σ ⇒<br/>
+<span class="id" title="keyword">let</span> <span class="id" title="var">x</span> := <span class="id" title="var">m</span> <span class="id" title="keyword">in</span>    <span class="id" title="keyword">let</span> (σ', <span class="id" title="var">x</span>) := <span class="id" title="var">m</span> σ <span class="id" title="keyword">in</span>      <span class="id" title="var">bind</span> <span class="id" title="var">m</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">x</span> ⇒     <span class="id" title="var">x</span> &lt;- <span class="id" title="var">m</span> ;;<br/>
+&nbsp;&nbsp;<span class="id" title="var">rest</span> <span class="id" title="var">x</span>           <span class="id" title="var">rest</span> <span class="id" title="var">x</span> σ'                  <span class="id" title="var">rest</span> <span class="id" title="var">x</span>)             <span class="id" title="var">rest</span> <span class="id" title="var">x</span>
+</span>
+<div class="paragraph"> </div>
+
+<a id="lab177"></a><h3 class="section">The <span class="inlinecode"><span class="id" title="var">ret</span></span> operation</h3>
+
+<div class="paragraph"> </div>
+
+ <span class="inlinecode"><span class="id" title="var">ret</span></span> pairs a value <span class="inlinecode"><span class="id" title="var">a</span>:<span class="id" title="var">A</span></span> along with the initial state <span class="inlinecode">σ</span> -- it is
+  a <span class="inlinecode"><span class="id" title="var">pure</span></span> computation that doesn't affect the state <span class="inlinecode">σ</span> 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <span class="id" title="var">state_ret</span> {<span class="id" title="var">S</span> <span class="id" title="var">A</span>} : <span class="id" title="var">A</span> → <span class="id" title="var">state</span> <span class="id" title="var">S</span> <span class="id" title="var">A</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> (<span class="id" title="var">a</span>:<span class="id" title="var">A</span>) (σ:<span class="id" title="var">S</span>) ⇒ (σ, <span class="id" title="var">a</span>).<br/>
+</div>
+
+<div class="doc">
+We introduce some handy notation for returning values. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> "'ret' a" := (<span class="id" title="var">state_ret</span> <span class="id" title="var">a</span>)<br/>
+</div>
+
+<div class="doc">
+<a id="lab178"></a><h3 class="section"><span class="inlinecode"><span class="id" title="var">get</span></span> and <span class="inlinecode"><span class="id" title="var">put</span></span></h3>
+
+<div class="paragraph"> </div>
+
+ For the <span class="inlinecode"><span class="id" title="var">state</span></span> monad, the <span class="inlinecode"><span class="id" title="var">get</span></span> and <span class="inlinecode"><span class="id" title="var">put</span></span> operations work generically on any state. 
+<div class="paragraph"> </div>
+
+ <span class="inlinecode"><span class="id" title="var">get</span></span> returns the current value of the state, leaving the state unchanged. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <span class="id" title="var">get</span> {<span class="id" title="var">S</span>} : <span class="id" title="var">state</span> <span class="id" title="var">S</span> <span class="id" title="var">S</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> σ ⇒ (σ, σ).<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">put</span></span> updates the state, returning the trivial <span class="inlinecode"><span class="id" title="var">unit</span></span> value. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <span class="id" title="var">put</span> {<span class="id" title="var">S</span>} (σ:<span class="id" title="var">S</span>) : <span class="id" title="var">state</span> <span class="id" title="var">S</span> <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> ⇒ (σ, <span class="id" title="var">tt</span>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab179"></a><h3 class="section">Example <span class="inlinecode"><span class="id" title="var">state</span></span> computation</h3>
+ Our state monad can work on any state type, for example <span class="inlinecode"><span class="id" title="var">bool</span></span> state.
+      Below, <span class="inlinecode"><span class="id" title="var">b</span></span> is the result of reading the state via <span class="inlinecode"><span class="id" title="var">get</span></span>, we use
+      <span class="inlinecode"><span class="id" title="var">_</span></span> because the result of the <span class="inlinecode"><span class="id" title="var">put</span></span> operation is the trivial <span class="inlinecode"><span class="id" title="var">unit</span></span> value,
+      and the computation returns <span class="inlinecode">3</span> if <span class="inlinecode"><span class="id" title="var">b</span></span> is <span class="inlinecode"><span class="id" title="var">true</span></span> and <span class="inlinecode">17</span> otherwise.
+   
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <span class="id" title="var">boolean_state_example</span> : <span class="id" title="var">state</span> <span class="id" title="var">bool</span> <span class="id" title="var">nat</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">b</span> &lt;- <span class="id" title="var">get</span> ;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">_</span> &lt;- <span class="id" title="var">put</span> (<span class="id" title="var">negb</span> <span class="id" title="var">b</span>) ;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">b</span> <span class="id" title="keyword">then</span> <span class="id" title="var">ret</span> 3 <span class="id" title="keyword">else</span> <span class="id" title="var">ret</span> 17.<br/><hr class='doublespaceincode'/>
+&nbsp;&nbsp;<span class="id" title="keyword">Eval</span> <span class="id" title="tactic">compute</span> <span class="id" title="keyword">in</span> (<span class="id" title="var">boolean_state_example</span> <span class="id" title="var">true</span>).<br/>
+</div>
+
+<div class="doc">
+==&gt; <span class="inlinecode">(<span class="id" title="var">false</span>,</span> <span class="inlinecode">3)</span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">bool</span></span> <span class="inlinecode">×</span> <span class="inlinecode"><span class="id" title="var">nat</span></span> 
+</div>
+<div class="code">
+
+&nbsp;&nbsp;<span class="id" title="keyword">Eval</span> <span class="id" title="tactic">compute</span> <span class="id" title="keyword">in</span> (<span class="id" title="var">boolean_state_example</span> <span class="id" title="var">false</span>).<br/>
+</div>
+
+<div class="doc">
+==&gt; <span class="inlinecode">(<span class="id" title="var">true</span>,</span> <span class="inlinecode">17)</span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">bool</span></span> <span class="inlinecode">×</span> <span class="inlinecode"><span class="id" title="var">nat</span></span> 
+</div>
+
+<div class="doc">
+<a id="lab180"></a><h2 class="section">Monads, generally</h2>
+
+</div>
+
+<div class="doc">
+A monad <span class="inlinecode"><span class="id" title="var">M</span>:<span class="id" title="keyword">Type</span></span> <span class="inlinecode">→</span> <span class="inlinecode"><span class="id" title="keyword">Type</span></span> is parameterized type that supports: 
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> <span class="inlinecode"><span class="id" title="var">ret</span></span>, a way to embed <i>pure</i> computations, and
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="var">bind</span></span>, a way to <i>sequence</i> computations.
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+ We summarize these requirements in a typeclass: 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Class</span> <span class="id" title="var">Monad</span> (<span class="id" title="var">M</span> : <span class="id" title="keyword">Type</span> → <span class="id" title="keyword">Type</span>) := {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ret</span>  : <span class="id" title="keyword">∀</span> <span class="id" title="var">A</span>, <span class="id" title="var">A</span> → <span class="id" title="var">M</span> <span class="id" title="var">A</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">bind</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span>, <span class="id" title="var">M</span> <span class="id" title="var">A</span> → (<span class="id" title="var">A</span> → <span class="id" title="var">M</span> <span class="id" title="var">B</span>) → <span class="id" title="var">M</span> <span class="id" title="var">B</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+</div>
+
+<div class="doc">
+And introduce monad notation <span class="inlinecode"><span class="id" title="var">x</span></span> <span class="inlinecode">&lt;-</span> <span class="inlinecode"><span class="id" title="var">m</span></span> <span class="inlinecode">;;</span> <span class="inlinecode"><span class="id" title="var">k</span></span>  
+</div>
+
+<div class="doc">
+<a id="lab184"></a><h3 class="section">State instance of the Monad Typeclass</h3>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">state</span> (<span class="id" title="var">S</span>:<span class="id" title="keyword">Type</span>) : <span class="id" title="keyword">Type</span> → <span class="id" title="keyword">Type</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">A</span> ⇒ <span class="id" title="var">S</span> → (<span class="id" title="var">S</span> × <span class="id" title="var">A</span>).<br/><hr class='doublespaceincode'/>
+&nbsp;&nbsp;<span class="id" title="keyword">Instance</span> <span class="id" title="var">stateM</span> <span class="id" title="var">S</span> : <span class="id" title="var">Monad</span> (<span class="id" title="var">state</span> <span class="id" title="var">S</span>) :=<br/>
+&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ret</span>  := <span class="id" title="keyword">fun</span> <span class="id" title="var">A</span> (<span class="id" title="var">a</span> : <span class="id" title="var">A</span>) σ ⇒ (σ, <span class="id" title="var">a</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">bind</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> (<span class="id" title="var">m</span> : <span class="id" title="var">state</span> <span class="id" title="var">S</span> <span class="id" title="var">A</span>) (<span class="id" title="var">k</span> : <span class="id" title="var">A</span> → <span class="id" title="var">state</span> <span class="id" title="var">S</span> <span class="id" title="var">B</span>) ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> σ ⇒ <span class="id" title="keyword">let</span> '(σ', <span class="id" title="var">a</span>) := <span class="id" title="var">m</span> σ <span class="id" title="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">k</span> <span class="id" title="var">a</span> σ'<br/>
+&nbsp;&nbsp;|}.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">get</span> {<span class="id" title="var">S</span>} : <span class="id" title="var">state</span> <span class="id" title="var">S</span> <span class="id" title="var">S</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> σ ⇒ (σ, σ).<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">put</span> {<span class="id" title="var">S</span>} (σ:<span class="id" title="var">S</span>) : <span class="id" title="var">state</span> <span class="id" title="var">S</span> <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> ⇒ (σ, <span class="id" title="var">tt</span>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab185"></a><h2 class="section">Other common monads.</h2>
+
+<div class="paragraph"> </div>
+
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> <i>identity</i>
+<br/>
+<span class="inlinecode">&nbsp;&nbsp;<span class="id" title="var">id</span> <span class="id" title="var">A</span> := <span class="id" title="var">A</span>
+</span>
+</li>
+<li> <i>option</i>, supporting <span class="inlinecode"><span class="id" title="tactic">fail</span></span>
+<br/>
+<span class="inlinecode">&nbsp;&nbsp;<span class="id" title="var">option</span> <span class="id" title="var">A</span> := <span class="id" title="var">None</span> | <span class="id" title="var">Some</span> <span class="id" title="var">A</span>
+</span>
+</li>
+<li> <i>nondeterminism</i>, supporting computable <span class="inlinecode"><span class="id" title="var">choice</span></span>
+<br/>
+<span class="inlinecode">&nbsp;&nbsp;<span class="id" title="var">nondet</span> <span class="id" title="var">A</span> := <span class="id" title="tactic">set</span> <span class="id" title="var">A</span>
+</span>
+</li>
+<li> <i>nondeterminism</i>, supporting existential <span class="inlinecode"><span class="id" title="var">choice</span></span>
+<br/>
+<span class="inlinecode">&nbsp;&nbsp;<span class="id" title="var">nondet</span> <span class="id" title="var">A</span> := <span class="id" title="var">A</span> → <span class="id" title="keyword">Prop</span>
+</span>
+</li>
+</ul>
+
+</div>
+
+<div class="doc">
+<a id="lab188"></a><h2 class="section">Monad Laws</h2>
+
+</div>
+
+<div class="doc">
+What does it mean for sequential composition to be "well behaved"?  Consider these two Imp commands:
+<br/>
+<span class="inlinecode">(<span class="id" title="var">c<sub>1</sub></span> ; <span class="id" title="var">c<sub>2</sub></span>) ; <span class="id" title="var">c<sub>3</sub></span>
+</span>vs
+<br/>
+<span class="inlinecode"><span class="id" title="var">c<sub>1</sub></span> ; (<span class="id" title="var">c<sub>2</sub></span> ; <span class="id" title="var">c<sub>3</sub></span>)
+</span>
+<div class="paragraph"> </div>
+
+ These programs should be <i>equivalent</i>! i.e. ';' is <i>associative</i> 
+<div class="paragraph"> </div>
+
+<a id="lab189"></a><h3 class="section"><span class="inlinecode"><span class="id" title="keyword">let</span></span> is associative too</h3>
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Example</span> <span class="id" title="var">nested_lets1</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">x</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="keyword">let</span> <span class="id" title="var">y</span> := 3 <span class="id" title="keyword">in</span> <span class="id" title="var">y</span> + <span class="id" title="var">y</span>)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">in</span> <span class="id" title="var">x</span> × 2 .<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Example</span> <span class="id" title="var">nested_lets2</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">y</span> := 3 <span class="id" title="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">x</span> := <span class="id" title="var">y</span> + <span class="id" title="var">y</span> <span class="id" title="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">x</span> × 2.<br/>
+</div>
+
+<div class="doc">
+Both of these expressions evaluate to the <i>same</i> value: 
+</div>
+<div class="code">
+<span class="id" title="keyword">Eval</span> <span class="id" title="tactic">compute</span> <span class="id" title="keyword">in</span> <span class="id" title="var">nested_lets1</span>.<br/>
+</div>
+
+<div class="doc">
+==&gt; <span class="inlinecode">12</span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">nat</span></span> 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Eval</span> <span class="id" title="tactic">compute</span> <span class="id" title="keyword">in</span> <span class="id" title="var">nested_lets2</span>.<br/>
+</div>
+
+<div class="doc">
+==&gt; <span class="inlinecode">12</span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">nat</span></span> 
+<div class="paragraph"> </div>
+
+<a id="lab190"></a><h3 class="section">Bind associativity</h3>
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">bind_associativity_law</span> {<span class="id" title="var">M</span>} `{<span class="id" title="var">Monad</span> <span class="id" title="var">M</span>} {<span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">C</span>} :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<span class="id" title="var">ma</span> : <span class="id" title="var">M</span> <span class="id" title="var">A</span>) (<span class="id" title="var">kb</span> : <span class="id" title="var">A</span> → <span class="id" title="var">M</span> <span class="id" title="var">B</span>) (<span class="id" title="var">kc</span> : <span class="id" title="var">B</span> → <span class="id" title="var">M</span> <span class="id" title="var">C</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x</span> &lt;- (<span class="id" title="var">y</span> &lt;- <span class="id" title="var">ma</span> ;; <span class="id" title="var">kb</span> <span class="id" title="var">y</span>) ;; <span class="id" title="var">kc</span> <span class="id" title="var">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">y</span> &lt;- <span class="id" title="var">ma</span> ;; <span class="id" title="var">x</span> &lt;- <span class="id" title="var">kb</span> <span class="id" title="var">y</span> ;; <span class="id" title="var">kc</span> <span class="id" title="var">x</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab191"></a><h3 class="section">Substitution</h3>
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Example</span> <span class="id" title="var">nested_lets_monadic2'</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">y</span> := 3 <span class="id" title="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">x</span> := <span class="id" title="var">y</span> + <span class="id" title="var">y</span> <span class="id" title="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x</span> × 2.<br/>
+</div>
+
+<div class="doc">
+After substitution: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Example</span> <span class="id" title="var">nested_lets2_subst</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">x</span> := 3 + 3 <span class="id" title="keyword">in</span>    <span class="comment">(*&nbsp;n.b.&nbsp;substitute&nbsp;<span class="inlinecode">3</span>&nbsp;for&nbsp;<span class="inlinecode"><span class="id" title="var">y</span></span>&nbsp;in&nbsp;&nbsp;<span class="inlinecode"><span class="id" title="var">y</span></span> <span class="inlinecode">+</span> <span class="inlinecode"><span class="id" title="var">y</span></span>&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">x</span> × 2.<br/>
+</div>
+
+<div class="doc">
+After the substitution, we still obtain the same result: 
+</div>
+<div class="code">
+<span class="id" title="keyword">Eval</span> <span class="id" title="tactic">compute</span> <span class="id" title="keyword">in</span> (<span class="id" title="var">nested_lets2_subst</span>).<br/>
+</div>
+
+<div class="doc">
+==&gt; <span class="inlinecode">12</span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">nat</span></span> 
+<div class="paragraph"> </div>
+
+<a id="lab192"></a><h3 class="section"><span class="inlinecode"><span class="id" title="var">ret</span></span> is the "left unit" of <span class="inlinecode"><span class="id" title="var">bind</span></span></h3>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">bind_ret_l_law</span> {<span class="id" title="var">M</span>} `{<span class="id" title="var">Monad</span> <span class="id" title="var">M</span>} {<span class="id" title="var">A</span> <span class="id" title="var">B</span>} :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<span class="id" title="var">a</span> : <span class="id" title="var">A</span>) (<span class="id" title="var">kb</span> : <span class="id" title="var">A</span> → <span class="id" title="var">M</span> <span class="id" title="var">B</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x</span> &lt;- <span class="id" title="var">ret</span> <span class="id" title="var">a</span> ;; <span class="id" title="var">kb</span> <span class="id" title="var">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">kb</span> <span class="id" title="var">a</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab193"></a><h3 class="section">One last law</h3>
+ To see what the last monad law means, consider this following example,
+again, stated with <span class="inlinecode"><span class="id" title="keyword">let</span></span> notation: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Example</span> <span class="id" title="var">let_return</span> (<span class="id" title="var">m</span> : <span class="id" title="var">nat</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">x</span> := <span class="id" title="var">m</span> <span class="id" title="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">x</span>.<br/>
+</div>
+
+<div class="doc">
+Rewriting this example using monadic notation we have: 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <span class="id" title="var">let_return_monadic</span> (<span class="id" title="var">m</span> : <span class="id" title="var">nat</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">x</span> &lt;- <span class="id" title="var">m</span> ;;<br/>
+&nbsp;&nbsp;<span class="id" title="var">ret</span> <span class="id" title="var">x</span>.<br/>
+</div>
+
+<div class="doc">
+But both of those are just equivalent to <span class="inlinecode"><span class="id" title="var">m</span></span> itself. 
+<div class="paragraph"> </div>
+
+<a id="lab194"></a><h3 class="section"><span class="inlinecode"><span class="id" title="var">ret</span></span> is the "right unit" of <span class="inlinecode"><span class="id" title="var">bind</span></span></h3>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">bind_ret_r_law</span> {<span class="id" title="var">M</span>} `{<span class="id" title="var">Monad</span> <span class="id" title="var">M</span>} {<span class="id" title="var">A</span>} :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<span class="id" title="var">m</span> : <span class="id" title="var">M</span> <span class="id" title="var">A</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x</span> &lt;- <span class="id" title="var">m</span> ;; <span class="id" title="var">ret</span> <span class="id" title="var">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">m</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab195"></a><h3 class="section">Monad Laws</h3>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Class</span> <span class="id" title="var">MonadLaws</span> {<span class="id" title="var">M</span>} `{<span class="id" title="var">Monad</span> <span class="id" title="var">M</span>} := {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">bind_associativity</span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">C</span> (<span class="id" title="var">ma</span> : <span class="id" title="var">M</span> <span class="id" title="var">A</span>) (<span class="id" title="var">kb</span> : <span class="id" title="var">A</span> → <span class="id" title="var">M</span> <span class="id" title="var">B</span>) (<span class="id" title="var">kc</span> : <span class="id" title="var">B</span> → <span class="id" title="var">M</span> <span class="id" title="var">C</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x</span> &lt;- (<span class="id" title="var">y</span> &lt;- <span class="id" title="var">ma</span> ;; <span class="id" title="var">kb</span> <span class="id" title="var">y</span>) ;; <span class="id" title="var">kc</span> <span class="id" title="var">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">y</span> &lt;- <span class="id" title="var">ma</span> ;; <span class="id" title="var">x</span> &lt;- <span class="id" title="var">kb</span> <span class="id" title="var">y</span> ;; <span class="id" title="var">kc</span> <span class="id" title="var">x</span><br/>
+<br/>
+&nbsp;&nbsp;; <span class="id" title="var">bind_ret_l</span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> (<span class="id" title="var">a</span> : <span class="id" title="var">A</span>) (<span class="id" title="var">kb</span> : <span class="id" title="var">A</span> → <span class="id" title="var">M</span> <span class="id" title="var">B</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x</span> &lt;- <span class="id" title="var">ret</span> <span class="id" title="var">a</span> ;; <span class="id" title="var">kb</span> <span class="id" title="var">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">kb</span> <span class="id" title="var">a</span><br/>
+<br/>
+&nbsp;&nbsp;; <span class="id" title="var">bind_ret_r</span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <span class="id" title="var">A</span> (<span class="id" title="var">m</span> : <span class="id" title="var">M</span> <span class="id" title="var">A</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x</span> &lt;- <span class="id" title="var">m</span> ;; <span class="id" title="var">ret</span> <span class="id" title="var">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">m</span><br/>
+&nbsp;&nbsp;}.<br/>
+</div>
+
+<div class="doc">
+<a id="lab196"></a><h3 class="section">Monadic Reasoning</h3>
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Example</span> <span class="id" title="var">nested_lets_generic</span> {<span class="id" title="var">M</span>} `{<span class="id" title="var">Monad</span> <span class="id" title="var">M</span>} : <span class="id" title="var">M</span> <span class="id" title="var">nat</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">x</span> &lt;-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">y</span> &lt;- <span class="id" title="var">ret</span> 3 ;; <span class="id" title="var">ret</span> (<span class="id" title="var">y</span>+<span class="id" title="var">y</span>)) ;;<br/>
+&nbsp;&nbsp;<span class="id" title="var">ret</span> (<span class="id" title="var">x</span> × 2).<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Example</span> <span class="id" title="var">monadic_proof</span> {<span class="id" title="var">M</span>} `{<span class="id" title="var">Monad</span> <span class="id" title="var">M</span>} `{<span class="id" title="var">MonadLaws</span> <span class="id" title="var">M</span>} :<br/>
+&nbsp;&nbsp;<span class="id" title="var">nested_lets_generic</span> = <span class="id" title="var">ret</span> 12.<br/>
+<div class="togglescript" id="proofcontrol1" onclick="toggleDisplay('proof1');toggleDisplay('proofcontrol1')"><span class="show"></span></div>
+<div class="proofscript" id="proof1" onclick="toggleDisplay('proof1');toggleDisplay('proofcontrol1')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <span class="id" title="var">nested_lets_generic</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">bind_associativity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">bind_ret_l</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">bind_ret_l</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<br/><hr class='doublespaceincode'/>
+</div>
+
+<div class="doc">
+<a id="lab197"></a><h3 class="section">Monad Equivalences</h3>
+
+<div class="paragraph"> </div>
+
+ The question of what it means for two monadic computations to
+be equivalent is interesting.  Consider: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">bind_associativity_state_problematic</span> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <span class="id" title="var">S</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">C</span> (<span class="id" title="var">ma</span> : <span class="id" title="var">state</span> <span class="id" title="var">S</span> <span class="id" title="var">A</span>) (<span class="id" title="var">kb</span> : <span class="id" title="var">A</span> → <span class="id" title="var">state</span> <span class="id" title="var">S</span> <span class="id" title="var">B</span>) (<span class="id" title="var">kc</span> : <span class="id" title="var">B</span> → <span class="id" title="var">state</span> <span class="id" title="var">S</span> <span class="id" title="var">C</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x</span> &lt;- (<span class="id" title="var">y</span> &lt;- <span class="id" title="var">ma</span> ;; <span class="id" title="var">kb</span> <span class="id" title="var">y</span>) ;; <span class="id" title="var">kc</span> <span class="id" title="var">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">y</span> &lt;- <span class="id" title="var">ma</span> ;; <span class="id" title="var">x</span> &lt;- <span class="id" title="var">kb</span> <span class="id" title="var">y</span> ;; <span class="id" title="var">kc</span> <span class="id" title="var">x</span>.<br/>
+<div class="togglescript" id="proofcontrol2" onclick="toggleDisplay('proof2');toggleDisplay('proofcontrol2')"><span class="show"></span></div>
+<div class="proofscript" id="proof2" onclick="toggleDisplay('proof2');toggleDisplay('proofcontrol2')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">unfold</span> <span class="id" title="var">bind</span>. <span class="id" title="tactic">simpl</span>.<br/>
+<span class="id" title="keyword">Abort</span>.<br/>
+</div>
+</div>
+
+<div class="doc">
+We could resort fo <i>functional extensionality</i>: 
+</div>
+<div class="code">
+<span class="id" title="keyword">Axiom</span> <span class="id" title="var">functional_extensionality</span> : <span class="id" title="keyword">∀</span> {<span class="id" title="var">A</span> <span class="id" title="var">B</span>} (<span class="id" title="var">f</span> <span class="id" title="var">g</span> : <span class="id" title="var">A</span> → <span class="id" title="var">B</span>),<br/>
+&nbsp;&nbsp;(<span class="id" title="keyword">∀</span> <span class="id" title="var">x</span>, <span class="id" title="var">f</span> <span class="id" title="var">x</span> = <span class="id" title="var">g</span> <span class="id" title="var">x</span>) → <span class="id" title="var">f</span> = <span class="id" title="var">g</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab198"></a><h3 class="section">A typeclass for monad equivalence.</h3>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Class</span> <span class="id" title="var">EqM</span> (<span class="id" title="var">M</span> : <span class="id" title="keyword">Type</span> → <span class="id" title="keyword">Type</span>) : <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">eqM</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">A</span>, <span class="id" title="var">M</span> <span class="id" title="var">A</span> → <span class="id" title="var">M</span> <span class="id" title="var">A</span> → <span class="id" title="keyword">Prop</span>.<br/>
+</div>
+
+<div class="doc">
+We also require a proof that <span class="inlinecode"><span class="id" title="var">eqM</span></span> is an equivalence relation. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Class</span> <span class="id" title="var">EqMEquivalence</span> (<span class="id" title="var">M</span> : <span class="id" title="keyword">Type</span> → <span class="id" title="keyword">Type</span>) `{<span class="id" title="var">EqM</span> <span class="id" title="var">M</span>} :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">eqM_equiv</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">A</span>, <span class="id" title="var">Equivalence</span> (<span class="id" title="var">eqM</span> (<span class="id" title="var">A</span> := <span class="id" title="var">A</span>)).<br/>
+</div>
+
+<div class="doc">
+Because the notion of monadic equivalence is so prevalant, we introduce
+<span class="inlinecode">≈</span> as a succinct, infix version. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Infix</span> &quot;≈" := <span class="id" title="var">eqM</span> (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 70) : <span class="id" title="var">monad_scope</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab199"></a><h3 class="section">Monad laws revisited</h3>
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Class</span> <span class="id" title="var">MonadLaws</span> <span class="id" title="var">M</span> `{<span class="id" title="var">Monad</span> <span class="id" title="var">M</span>} `{<span class="id" title="var">EqM</span> <span class="id" title="var">M</span>} := {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">bind_associativity</span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">C</span> (<span class="id" title="var">ma</span> : <span class="id" title="var">M</span> <span class="id" title="var">A</span>) (<span class="id" title="var">kb</span> : <span class="id" title="var">A</span> → <span class="id" title="var">M</span> <span class="id" title="var">B</span>) (<span class="id" title="var">kc</span> : <span class="id" title="var">B</span> → <span class="id" title="var">M</span> <span class="id" title="var">C</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x</span> &lt;- (<span class="id" title="var">y</span> &lt;- <span class="id" title="var">ma</span> ;; <span class="id" title="var">kb</span> <span class="id" title="var">y</span>) ;; <span class="id" title="var">kc</span> <span class="id" title="var">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;≈                                 <span class="comment">(*&nbsp;&lt;----&nbsp;NEW!&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">y</span> &lt;- <span class="id" title="var">ma</span> ;; <span class="id" title="var">x</span> &lt;- <span class="id" title="var">kb</span> <span class="id" title="var">y</span> ;; <span class="id" title="var">kc</span> <span class="id" title="var">x</span><br/>
+<br/>
+&nbsp;&nbsp;; <span class="id" title="var">bind_ret_l</span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> (<span class="id" title="var">a</span> : <span class="id" title="var">A</span>) (<span class="id" title="var">kb</span> : <span class="id" title="var">A</span> → <span class="id" title="var">M</span> <span class="id" title="var">B</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x</span> &lt;- <span class="id" title="var">ret</span> <span class="id" title="var">a</span> ;; <span class="id" title="var">kb</span> <span class="id" title="var">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;≈<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">kb</span> <span class="id" title="var">a</span><br/>
+<br/>
+&nbsp;&nbsp;; <span class="id" title="var">bind_ret_r</span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <span class="id" title="var">A</span> (<span class="id" title="var">m</span> : <span class="id" title="var">M</span> <span class="id" title="var">A</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x</span> &lt;- <span class="id" title="var">m</span> ;; <span class="id" title="var">ret</span> <span class="id" title="var">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;≈<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">m</span><br/>
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;NEW!&nbsp;*)</span><br/>
+&nbsp;&nbsp;; <span class="id" title="var">Proper_bind</span> : <span class="id" title="keyword">∀</span> {<span class="id" title="var">A</span> <span class="id" title="var">B</span>},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id" title="var">Proper</span> (<span class="id" title="var">M</span> <span class="id" title="var">A</span> → (<span class="id" title="var">A</span> → <span class="id" title="var">M</span> <span class="id" title="var">B</span>) → <span class="id" title="var">M</span> <span class="id" title="var">B</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">eqM</span> ==&gt; <span class="id" title="var">pointwise_relation</span> <span class="id" title="var">_</span> <span class="id" title="var">eqM</span> ==&gt; <span class="id" title="var">eqM</span>) <span class="id" title="var">bind</span><br/>
+&nbsp;&nbsp;}.<br/>
+</div>
+
+<div class="doc">
+<a id="lab200"></a><h2 class="section">Properness: a logical relation</h2>
+
+<div class="paragraph"> </div>
+
+ The requirement that <span class="inlinecode"><span class="id" title="var">bind</span></span> be <span class="inlinecode"><span class="id" title="var">Proper</span></span> says that <span class="inlinecode"><span class="id" title="var">bind</span></span> "respects" the
+  monad equivalence.  Alternatively, that <span class="inlinecode"><span class="id" title="var">bind</span></span> is in the <i>logical relation</i>
+  associated with its type:
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">Proper_bind_def</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">M</span> `{<span class="id" title="var">Monad</span> <span class="id" title="var">M</span>} `{<span class="id" title="var">EqM</span> <span class="id" title="var">M</span>} `{<span class="id" title="var">MonadLaws</span> <span class="id" title="var">M</span>} <span class="id" title="var">A</span> <span class="id" title="var">B</span>,<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(@<span class="id" title="var">Proper</span> (<span class="id" title="var">M</span> <span class="id" title="var">A</span> → (<span class="id" title="var">A</span> → <span class="id" title="var">M</span> <span class="id" title="var">B</span>) → <span class="id" title="var">M</span> <span class="id" title="var">B</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">eqM</span> ==&gt; <span class="id" title="var">pointwise_relation</span> <span class="id" title="var">_</span> <span class="id" title="var">eqM</span> ==&gt; <span class="id" title="var">eqM</span>) <span class="id" title="var">bind</span>) ↔<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<span class="id" title="var">m<sub>1</sub></span> <span class="id" title="var">m<sub>2</sub></span> : <span class="id" title="var">M</span> <span class="id" title="var">A</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">m<sub>1</sub></span> ≈ <span class="id" title="var">m<sub>2</sub></span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <span class="id" title="var">k<sub>1</sub></span> <span class="id" title="var">k<sub>2</sub></span> : <span class="id" title="var">A</span> → <span class="id" title="var">M</span> <span class="id" title="var">B</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="keyword">∀</span> <span class="id" title="var">a<sub>1</sub></span> <span class="id" title="var">a<sub>2</sub></span> : <span class="id" title="var">A</span>, <span class="id" title="var">a<sub>1</sub></span> = <span class="id" title="var">a<sub>2</sub></span> → <span class="id" title="var">k<sub>1</sub></span> <span class="id" title="var">a<sub>1</sub></span> ≈ <span class="id" title="var">k<sub>2</sub></span> <span class="id" title="var">a<sub>2</sub></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;→<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">x</span> &lt;- <span class="id" title="var">m<sub>1</sub></span>;; <span class="id" title="var">k<sub>1</sub></span> <span class="id" title="var">x</span>) ≈ (<span class="id" title="var">x</span> &lt;- <span class="id" title="var">m<sub>2</sub></span>;; <span class="id" title="var">k<sub>2</sub></span> <span class="id" title="var">x</span>).<br/>
+<div class="togglescript" id="proofcontrol3" onclick="toggleDisplay('proof3');toggleDisplay('proofcontrol3')"><span class="show"></span></div>
+<div class="proofscript" id="proof3" onclick="toggleDisplay('proof3');toggleDisplay('proofcontrol3')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">split</span>; <span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <span class="id" title="var">H<sub>4</sub></span>; <span class="id" title="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="tactic">red</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">H<sub>6</sub></span>. <span class="id" title="tactic">auto</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">repeat</span> <span class="id" title="tactic">red</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">H<sub>4</sub></span>; <span class="id" title="tactic">auto</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">subst</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">H<sub>6</sub></span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+
+<div class="doc">
+<a id="lab201"></a><h3 class="section">Important!</h3>
+
+<div class="paragraph"> </div>
+
+ This generalization from <span class="inlinecode">=</span> to <span class="inlinecode"><span class="id" title="var">eqM</span></span> is the stepping stone
+to even more powerful <i>relational reasoning</i> principles that
+will naturally extend the <i>computational equivalence</i> to
+<i>relational specifications</i>.
+
+</div>
+
+<div class="doc">
+<a id="lab202"></a><h3 class="section">Monad Laws for <span class="inlinecode"><span class="id" title="var">state</span></span> <span class="inlinecode"><span class="id" title="var">S</span></span></h3>
+
+<div class="paragraph"> </div>
+
+ First, we define <span class="inlinecode"><span class="id" title="var">eqM</span></span> for <span class="inlinecode"><span class="id" title="var">state</span></span> <span class="inlinecode"><span class="id" title="var">S</span></span>: 
+<div class="paragraph"> </div>
+
+ For expediency (and compatibility with SF) we use <span class="inlinecode">=</span> and
+  restort to <i>functional_extensionality</i>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;#[<span class="id" title="var">export</span>]<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Instance</span> <span class="id" title="var">eqM_state</span> {<span class="id" title="var">S</span>} : <span class="id" title="var">EqM</span> (<span class="id" title="var">state</span> <span class="id" title="var">S</span>) := <span class="id" title="keyword">fun</span> <span class="id" title="var">A</span> ⇒ (@<span class="id" title="var">eq</span> (<span class="id" title="var">state</span> <span class="id" title="var">S</span> <span class="id" title="var">A</span>)).<br/><hr class='doublespaceincode'/>
+&nbsp;&nbsp;#[<span class="id" title="var">export</span>]<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Instance</span> <span class="id" title="var">eqM_state_equiv</span> {<span class="id" title="var">S</span>} : <span class="id" title="var">EqMEquivalence</span> (<span class="id" title="var">state</span> <span class="id" title="var">S</span>).<br/>
+<div class="togglescript" id="proofcontrol4" onclick="toggleDisplay('proof4');toggleDisplay('proofcontrol4')"><span class="show"></span></div>
+<div class="proofscript" id="proof4" onclick="toggleDisplay('proof4');toggleDisplay('proofcontrol4')">
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">unfold</span> <span class="id" title="var">eqM</span>, <span class="id" title="var">eqM_state</span>; <span class="id" title="var">typeclasses</span> <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+
+<div class="doc">
+Next we prove the monad laws: 
+</div>
+<div class="code">
+&nbsp;&nbsp;#[<span class="id" title="var">export</span>]<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Instance</span> <span class="id" title="var">eqm_state_monad_laws</span> {<span class="id" title="var">S</span>} : <span class="id" title="var">MonadLaws</span> (<span class="id" title="var">state</span> <span class="id" title="var">S</span>).<br/>
+<div class="togglescript" id="proofcontrol5" onclick="toggleDisplay('proof5');toggleDisplay('proofcontrol5')"><span class="show"></span></div>
+<div class="proofscript" id="proof5" onclick="toggleDisplay('proof5');toggleDisplay('proofcontrol5')">
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">constructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">unfold</span> <span class="id" title="var">eqM</span>, <span class="id" title="var">eqM_state</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;use&nbsp;functional&nbsp;extensionality(!)&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">functional_extensionality</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intro</span> σ.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">ma</span> σ).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">unfold</span> <span class="id" title="var">eqM</span>, <span class="id" title="var">eqM_state</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">functional_extensionality</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intro</span> σ.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">unfold</span> <span class="id" title="var">eqM</span>, <span class="id" title="var">eqM_state</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">functional_extensionality</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intro</span> σ.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">m</span> σ).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">repeat</span> <span class="id" title="tactic">red</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">m<sub>1</sub></span> <span class="id" title="var">m<sub>2</sub></span> <span class="id" title="var">EQ</span> <span class="id" title="var">a<sub>1</sub></span> <span class="id" title="var">a<sub>2</sub></span> <span class="id" title="var">HP</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">functional_extensionality</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intro</span> σ.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">EQ</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">m<sub>2</sub></span> σ).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">HP</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+
+<div class="doc">
+<a id="lab203"></a><h3 class="section">State Equivalences / Algebraic Reasoning</h3>
+
+</div>
+<div class="code">
+<hr class='doublespaceincode'/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <span class="id" title="var">put_put</span> {<span class="id" title="var">S</span>} : <span class="id" title="keyword">∀</span> (σ1 σ2 : <span class="id" title="var">S</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">put</span> σ1 ;; <span class="id" title="var">put</span> σ2 ≈ <span class="id" title="var">put</span> σ2.<br/>
+<div class="togglescript" id="proofcontrol6" onclick="toggleDisplay('proof6');toggleDisplay('proofcontrol6')"><span class="show"></span></div>
+<div class="proofscript" id="proof6" onclick="toggleDisplay('proof6');toggleDisplay('proofcontrol6')">
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/><hr class='doublespaceincode'/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> σ1 σ2.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">functional_extensionality</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> σ0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+
+<div class="doc">
+<a id="lab204"></a><h3 class="section"> </h3>
+
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <span class="id" title="var">put_get</span> {<span class="id" title="var">S</span> <span class="id" title="var">A</span>} : <span class="id" title="keyword">∀</span> (σ : <span class="id" title="var">S</span>) (<span class="id" title="var">k</span> : <span class="id" title="var">S</span> → <span class="id" title="var">state</span> <span class="id" title="var">S</span> <span class="id" title="var">A</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">put</span> σ ;; <span class="id" title="var">get</span> ≈ <span class="id" title="var">put</span> σ ;; <span class="id" title="var">ret</span> σ.<br/>
+<div class="togglescript" id="proofcontrol7" onclick="toggleDisplay('proof7');toggleDisplay('proofcontrol7')"><span class="show"></span></div>
+<div class="proofscript" id="proof7" onclick="toggleDisplay('proof7');toggleDisplay('proofcontrol7')">
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/><hr class='doublespaceincode'/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> σ1 <span class="id" title="var">k</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">functional_extensionality</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> σ0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+
+<div class="doc">
+<a id="lab205"></a><h3 class="section"> </h3>
+
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <span class="id" title="var">get_put</span> {<span class="id" title="var">S</span>} :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">s</span> &lt;- <span class="id" title="var">get</span> ;; <span class="id" title="var">put</span> <span class="id" title="var">s</span> ≈ (<span class="id" title="var">ret</span> <span class="id" title="var">tt</span> : <span class="id" title="var">state</span> <span class="id" title="var">S</span> <span class="id" title="var">unit</span>).<br/>
+<div class="togglescript" id="proofcontrol8" onclick="toggleDisplay('proof8');toggleDisplay('proofcontrol8')"><span class="show"></span></div>
+<div class="proofscript" id="proof8" onclick="toggleDisplay('proof8');toggleDisplay('proofcontrol8')">
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">functional_extensionality</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> σ0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+
+<div class="doc">
+<a id="lab206"></a><h2 class="section"> </h2>
+
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <span class="id" title="var">get_get</span> {<span class="id" title="var">S</span> <span class="id" title="var">A</span>} : <span class="id" title="keyword">∀</span> (<span class="id" title="var">k</span> : <span class="id" title="var">S</span> → <span class="id" title="var">S</span> → <span class="id" title="var">state</span> <span class="id" title="var">S</span> <span class="id" title="var">A</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">s<sub>1</sub></span> &lt;- <span class="id" title="var">get</span> ;; <span class="id" title="var">s<sub>2</sub></span> &lt;- <span class="id" title="var">get</span> ;; <span class="id" title="var">k</span> <span class="id" title="var">s<sub>1</sub></span> <span class="id" title="var">s<sub>2</sub></span> ≈ <span class="id" title="var">s<sub>1</sub></span> &lt;- <span class="id" title="var">get</span> ;; <span class="id" title="var">k</span> <span class="id" title="var">s<sub>1</sub></span> <span class="id" title="var">s<sub>1</sub></span>.<br/>
+<div class="togglescript" id="proofcontrol9" onclick="toggleDisplay('proof9');toggleDisplay('proofcontrol9')"><span class="show"></span></div>
+<div class="proofscript" id="proof9" onclick="toggleDisplay('proof9');toggleDisplay('proofcontrol9')">
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">k</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">functional_extensionality</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> σ0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<br/><hr class='doublespaceincode'/>
+
+<br/><hr class='doublespaceincode'/>
+
+<br/><hr class='doublespaceincode'/>
+</div>
+
+<div class="doc">
+<a id="lab208"></a><h3 class="section">Recap</h3>
+
+<div class="paragraph"> </div>
+
+ Monads:
+<ul class="doclist">
+<li> General way of modeling sequential composition
+
+</li>
+<li> Defining <i>equivalence</i> of computations relationally will lead us
+
+</li>
+</ul>
+to reasoning principles.
+
+<div class="paragraph"> </div>
+
+ What about loops? ==&gt; <i>coinduction</i> and <i>interaction trees</i>
+... but first: <i>free</i> monads 
+<div class="paragraph"> </div>
+
+<a id="lab209"></a><h3 class="section"> </h3>
+
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="coqindex.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>
