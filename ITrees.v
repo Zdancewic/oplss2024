@@ -4,7 +4,7 @@ Set Primitive Projections.
 
 From RIP Require Import Utils Monads.
 
-Notation "E ~> F" := (forall X, E X -> F X) (at level 99, only parsing).
+Notation "E ~> F" := (forall X, E X -> F X) (at level 99, right associativity, only parsing).
 
 Variant sum1 (E1 E2 : Type -> Type) (X : Type) : Type :=
 | inl1 (_ : E1 X)
@@ -210,19 +210,19 @@ End FirstExamples.
    when we will write other [cofix] whose body use [bind] themselves.
 *)
 (* ----------------------------------------------------------------- *)
-(** *** Substitution: *)
+(** *** Sequential Composition: *)
 
-(** As with the [FFree] monad, we can define a "substitution" operation,
-which looks for all the [Ret x] leaves of the tree and applies a
+(** As with the [FFree] monad, we can define a sequential composition
+operation, which looks for all the [Ret x] leaves of the tree and applies a
 continuation [k] to build a bigger tree : *)
 
-Definition subst {E : Type -> Type} {T U : Type} (k : T -> itree E U)
+Definition seq {E : Type -> Type} {T U : Type} (k : T -> itree E U)
   : itree E T -> itree E U :=
-    cofix _subst (u : itree E T) : itree E U :=
+    cofix _seq (u : itree E T) : itree E U :=
     match observe u with
     | RetF r => k r
-    | TauF t => Tau (_subst t)
-    | VisF e h => Vis e (fun x => _subst (h x))
+    | TauF t => Tau (_seq t)
+    | VisF e h => Vis e (fun x => _seq (h x))
     end.
 
 (* ----------------------------------------------------------------- *)
@@ -232,9 +232,9 @@ Definition subst {E : Type -> Type} {T U : Type} (k : T -> itree E U)
 
 (** Return is just [Ret]  *)
 
-(** Bind is just [subst] with the arguments reordered: *)
+(** Bind is just [seq] with the arguments reordered: *)
 Definition bind {E : Type -> Type} {T U : Type} (u : itree E T) (k : T -> itree E U)
-  : itree E U := subst k u.
+  : itree E U := seq k u.
 
 (** An elementary [itree] computation emits an event: *)
 Definition trigger {E : Type -> Type} {A : Type} (e : E A) : itree E A :=
@@ -288,6 +288,8 @@ End MoreExamples.
 
 (* ================================================================= *)
 (** ** Iteration *)
+
+Module Iter.
 
 (** In order to write infinite computations, we write a fixed-point combinator [iter].
   [iter step init] runs [step init], analyses the result and either feeds the new value back
@@ -425,4 +427,49 @@ Definition factorial (n : nat) : itree voidE nat :=
 
 Eval compute in burn 10 (factorial 6).
 
-(* 2024-06-07 10:32 *)
+End Iter.
+
+From ExtLib Require Import
+     Structures.Functor
+     Structures.Monad.
+
+From ITree Require Import
+     Basics.Basics
+     Core.ITreeDefinition
+     Indexed.Relation.
+
+Import Monads.
+
+(* ================================================================= *)
+(** ** Interpretations *)
+
+(** An event handler [E ~> M] defines a monad morphism
+    [itree E ~> M] for any monad [M] with a loop operator. *)
+
+(** This is just the monadic "fold" operation specialized to
+   itree. *)
+
+Definition interp {E M : Type -> Type}
+           {MF : Functor M} {MM : Monad M} {IM : MonadIter M}
+           (h : E ~> M) :
+  itree E ~> M := fun R =>
+  iter (fun t =>
+    match observe t with
+    | RetF r => ret (inr r)
+    | TauF t => ret (inl t)
+    | VisF e k => fmap (fun x => inl (k x)) (h _ e)
+    end).
+
+(* ================================================================= *)
+(** ** Stateful Interpretations *)
+
+(** Stateful handlers [E ~> stateT S (itree F)] and morphisms
+   [E ~> state S] define stateful itree morphisms
+   [itree E ~> stateT S (itree F)]. *)
+
+Definition interp_state {E M S}
+           {FM : Functor M} {MM : Monad M}
+           {IM : MonadIter M} (h : E ~> stateT S M) :
+  itree E ~> stateT S M := interp h.
+
+(* 2024-06-13 11:26 *)

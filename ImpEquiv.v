@@ -498,7 +498,7 @@ Variant red_bexp : rel bexp :=
 (* ----------------------------------------------------------------- *)
 (** *** Rules on commands (1) *)
 
-(** These are straight-up validated by ≡ (strong equivalence *)
+(** These are straight-up validated by ≡ (strong equivalence) *)
 
 Variant red_com1   : rel com :=
 | skipL c          : red_com1 <{ skip ; c }> <{c}>
@@ -1656,4 +1656,4 @@ Proof.
   now rewrite upd_lu.
 Qed.
 
-(* 2024-06-10 14:53 *)
+(* 2024-06-13 11:26 *)

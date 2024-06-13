@@ -69,7 +69,7 @@ Fixpoint repr_aexp (a : aexp) : itree MemE val :=
   in
   match a with
   | ANum n      => Ret n (* Pure computation: we simply return n *)
-  | AId x       => rd x  (* We put the responsability on the environment:
+  | AId x       => rd x  (* We put the responsibility on the environment:
                         we just "trigger" the read *)
   | APlus a b => aop op_plus a b
   | AMinus a b => aop op_minus a b
@@ -178,7 +178,8 @@ Definition handle_Mem : MemE ~> M :=
 (* ----------------------------------------------------------------- *)
 (** *** Finally, some nice notation for Imp semantics *)
 
-Notation "'ℑ'" := (interp_state handle_Mem) (at level 0).
+Notation "'ℑ'" := (interp_state handle_Mem)
+                    (at level 0).
 
 Definition model_com : com -> M unit :=
   fun c => ℑ ⟦ c ⟧.
@@ -221,4 +222,4 @@ Definition MP := stateT mem (itree PrintE).
 
 End ImpPrint.
 
-(* 2024-06-07 10:32 *)
+(* 2024-06-13 11:26 *)

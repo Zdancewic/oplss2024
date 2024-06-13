@@ -112,4 +112,4 @@ style of Pierce et al.'s _Software Foundations_.
 - Monads: Information Flow & Probabilistic Programming
 *)
 
-(* 2024-06-10 14:53 *)
+(* 2024-06-13 11:26 *)

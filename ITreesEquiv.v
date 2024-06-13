@@ -29,6 +29,7 @@ instance we  must also define [eqM] and prove the [MonadLaws]. *)
 We can prove the monad laws up to strong bisimulation.
 *)
 
+
 (* ----------------------------------------------------------------- *)
 (** *** Weak Bisimulation *)
 
@@ -51,6 +52,8 @@ This justifies the following equivalence:
 - "equivalent up to Tau" (or, [eutt])
 
 *)
+
+
 
 (* ----------------------------------------------------------------- *)
 (** *** Laws for Iteration *)
@@ -85,7 +88,7 @@ Section IterLaws.
   (** *** Iter laws, more abstractly *)
 
   (** If we work with the so-called Kleisli category where "functions"
-  (morphisms) are of the type [A -> M B] and we write [f >>> g] for function
+  (morphisms) have type [A -> M B] and we write [f >>> g] for function
   composition and ⩯ for pointwise equivalence, we have these rules: *)
 
 (**
@@ -100,31 +103,5 @@ Section IterLaws.
 
 End IterLaws.
 
-(* ================================================================= *)
-(** ** Relational Equivalence *)
 
-Module EqMR.
-
-(** Heterogeneous binary relations: *)
-
-  Definition relationH (A B : Type) := A -> B -> Prop.
-
-Section EqmR.
-
-  (** We consider heterogeneous relations on computations parameterized by a
-     relation on the return types *)
-  Class EqmR (m : Type -> Type) : Type :=
-    { eqmR : forall {A B : Type} (R : relationH A B), relationH (m A) (m B) }.
-
-End EqmR.
-Infix "≈{ R  }" := (eqmR R) (at level 30) : cat_scope.
-Notation "t1 ≋ t2" := (eqmR eq t1 t2) (at level 40) : cat_scope.
-
-Arguments eqmR {m _ A B}.
-
-Import RelNotations.
-Local Open Scope relationH_scope.
-
-End EqMR.
-
-(* 2024-06-07 10:32 *)
+(* 2024-06-13 11:26 *)
